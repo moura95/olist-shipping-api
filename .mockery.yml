@@ -1,0 +1,11 @@
+packages:
+  github/moura95/olist-api/internal/repository:
+    interfaces:
+      Querier:
+        config:
+          dir: "internal/repository/"
+          filename: "querier_mock.go"
+          inpackage: True
+          with-expecter: True
+        configs:
+          - mockname: "QuerierMocked"
