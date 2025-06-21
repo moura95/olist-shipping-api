@@ -1,6 +1,6 @@
 -- name: CreatePackage :one
 INSERT INTO packages (tracking_code, product, weight_kg, destination_state, status)
-VALUES ($1, $2, $3, $4, 'criado')
+VALUES ($1, $2, $3, $4, 'created')
 RETURNING id, tracking_code, product, weight_kg, destination_state, status, hired_carrier_id, hired_price, hired_delivery_days, created_at, updated_at;
 
 -- name: GetPackageById :one
@@ -28,7 +28,7 @@ UPDATE packages
 SET hired_carrier_id = $2,
     hired_price = $3,
     hired_delivery_days = $4,
-    status = 'esperando_coleta',
+    status = 'awaiting_pickup',
     updated_at = NOW()
 WHERE id = $1;
 
@@ -45,12 +45,12 @@ SELECT EXISTS(
 -- name: GetQuotesForPackage :many
 SELECT
     c.name as carier,
-    (cr.price_per_kg * $2) as estimated_price,
+    (cr.price_per_kg * @weight_kg::DECIMAL)::FLOAT as estimated_price,
     cr.estimated_delivery_days
 FROM carriers c
          JOIN carrier_regions cr ON c.id = cr.carrier_id
          JOIN states s ON s.region_id = cr.region_id
-WHERE s.code = $1;
+WHERE s.code = @state_code;
 
 -- name: GetCarrierById :one
 SELECT id, name, created_at
