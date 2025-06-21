@@ -27,7 +27,7 @@ type CarrierRegion struct {
 
 type Package struct {
 	ID                uuid.UUID
-	TrackingCode      string
+	TrackingCode      sql.NullString
 	Product           string
 	WeightKg          float64
 	DestinationState  string

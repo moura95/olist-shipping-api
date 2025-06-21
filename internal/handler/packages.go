@@ -75,7 +75,7 @@ func (h *PackageHandler) List(ctx *gin.Context) {
 
 		resp = append(resp, v1.PackageResponse{
 			ID:                &pkgID,
-			TrackingCode:      &pkg.TrackingCode,
+			TrackingCode:      util.NullStringToPtr(pkg.TrackingCode),
 			Product:           &pkg.Product,
 			WeightKg:          &pkg.WeightKg,
 			DestinationState:  &pkg.DestinationState,
@@ -140,7 +140,7 @@ func (h *PackageHandler) GetByID(ctx *gin.Context) {
 
 	response := v1.PackageResponse{
 		ID:                &pkgID,
-		TrackingCode:      &pkg.TrackingCode,
+		TrackingCode:      util.NullStringToPtr(pkg.TrackingCode),
 		Product:           &pkg.Product,
 		WeightKg:          &pkg.WeightKg,
 		DestinationState:  &pkg.DestinationState,
@@ -204,7 +204,7 @@ func (h *PackageHandler) GetByTrackingCode(ctx *gin.Context) {
 
 	response := v1.PackageResponse{
 		ID:                &pkgID,
-		TrackingCode:      &pkg.TrackingCode,
+		TrackingCode:      util.NullStringToPtr(pkg.TrackingCode),
 		Product:           &pkg.Product,
 		WeightKg:          &pkg.WeightKg,
 		DestinationState:  &pkg.DestinationState,
@@ -268,7 +268,7 @@ func (h *PackageHandler) Create(ctx *gin.Context) {
 	pkgID := pkg.ID.String()
 	response := v1.PackageResponse{
 		ID:                &pkgID,
-		TrackingCode:      &pkg.TrackingCode,
+		TrackingCode:      util.NullStringToPtr(pkg.TrackingCode),
 		Product:           &pkg.Product,
 		WeightKg:          &pkg.WeightKg,
 		DestinationState:  &pkg.DestinationState,

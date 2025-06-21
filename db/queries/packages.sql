@@ -56,3 +56,8 @@ WHERE s.code = @state_code;
 SELECT id, name, created_at
 FROM carriers
 WHERE id = $1;
+
+-- name: UpdatePackageStatusWithTracking :exec
+UPDATE packages
+SET status = $2, tracking_code = $3, updated_at = NOW()
+WHERE id = $1;

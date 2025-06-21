@@ -27,17 +27,7 @@ func NewPackageService(repo repository.Querier, cfg config.Config, log *zap.Suga
 }
 
 func (s *PackageService) Create(ctx context.Context, product string, weightKg float64, destinationState string) (*repository.Package, error) {
-	trackingCode := tracking.GenerateUniqueTrackingCode(func(code string) bool {
-		exists, err := s.repository.TrackingCodeExists(ctx, code)
-		if err != nil {
-			s.logger.Errorw("failed to check tracking code existence", "error", err, "tracking_code", code)
-			return true
-		}
-		return exists
-	})
-
 	arg := repository.CreatePackageParams{
-		TrackingCode:     trackingCode,
 		Product:          product,
 		WeightKg:         weightKg,
 		DestinationState: destinationState,
@@ -66,7 +56,10 @@ func (s *PackageService) GetByID(ctx context.Context, id string) (*repository.Pa
 }
 
 func (s *PackageService) GetByTrackingCode(ctx context.Context, trackingCode string) (*repository.Package, error) {
-	pkg, err := s.repository.GetPackageByTrackingCode(ctx, trackingCode)
+	pkg, err := s.repository.GetPackageByTrackingCode(ctx, sql.NullString{
+		String: trackingCode,
+		Valid:  trackingCode != "",
+	})
 	if err != nil {
 		return nil, fmt.Errorf("get package by tracking code: %v", err)
 	}
@@ -89,12 +82,35 @@ func (s *PackageService) UpdateStatus(ctx context.Context, id, status string) er
 		return fmt.Errorf("parse package id: %v", err)
 	}
 
-	arg := repository.UpdatePackageStatusParams{
-		ID:     packageID,
-		Status: status,
+	if status == "enviado" {
+		trackingCode := tracking.GenerateUniqueTrackingCode(func(code string) bool {
+			exists, err := s.repository.TrackingCodeExists(ctx, sql.NullString{
+				String: code,
+				Valid:  true,
+			})
+			if err != nil {
+				s.logger.Errorw("failed to check tracking code existence", "error", err, "tracking_code", code)
+				return true
+			}
+			return exists
+		})
+
+		arg := repository.UpdatePackageStatusWithTrackingParams{
+			ID:           packageID,
+			Status:       status,
+			TrackingCode: sql.NullString{String: trackingCode, Valid: true},
+		}
+
+		err = s.repository.UpdatePackageStatusWithTracking(ctx, arg)
+	} else {
+		arg := repository.UpdatePackageStatusParams{
+			ID:     packageID,
+			Status: status,
+		}
+
+		err = s.repository.UpdatePackageStatus(ctx, arg)
 	}
 
-	err = s.repository.UpdatePackageStatus(ctx, arg)
 	if err != nil {
 		return fmt.Errorf("update package status: %v", err)
 	}

@@ -6,6 +6,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -16,7 +17,7 @@ type Querier interface {
 	GetCarrierById(ctx context.Context, id uuid.UUID) (Carrier, error)
 	GetCarrierRegions(ctx context.Context, carrierID uuid.UUID) ([]GetCarrierRegionsRow, error)
 	GetPackageById(ctx context.Context, id uuid.UUID) (Package, error)
-	GetPackageByTrackingCode(ctx context.Context, trackingCode string) (Package, error)
+	GetPackageByTrackingCode(ctx context.Context, trackingCode sql.NullString) (Package, error)
 	GetQuotesForPackage(ctx context.Context, arg GetQuotesForPackageParams) ([]GetQuotesForPackageRow, error)
 	GetRegionByState(ctx context.Context, code string) (GetRegionByStateRow, error)
 	GetStateByCode(ctx context.Context, code string) (GetStateByCodeRow, error)
@@ -25,8 +26,9 @@ type Querier interface {
 	ListPackages(ctx context.Context) ([]Package, error)
 	ListRegions(ctx context.Context) ([]Region, error)
 	ListStates(ctx context.Context) ([]ListStatesRow, error)
-	TrackingCodeExists(ctx context.Context, trackingCode string) (bool, error)
+	TrackingCodeExists(ctx context.Context, trackingCode sql.NullString) (bool, error)
 	UpdatePackageStatus(ctx context.Context, arg UpdatePackageStatusParams) error
+	UpdatePackageStatusWithTracking(ctx context.Context, arg UpdatePackageStatusWithTrackingParams) error
 }
 
 var _ Querier = (*Queries)(nil)

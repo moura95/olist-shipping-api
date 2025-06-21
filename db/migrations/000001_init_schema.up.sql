@@ -42,7 +42,7 @@ CREATE TABLE carrier_regions (
 -- Table Packages
 CREATE TABLE packages (
                           id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                          tracking_code VARCHAR(11) UNIQUE NOT NULL,
+                          tracking_code VARCHAR(11),
                           product VARCHAR(255) NOT NULL,
                           weight_kg FLOAT NOT NULL CHECK (weight_kg > 0),
                           destination_state CHAR(2) NOT NULL,

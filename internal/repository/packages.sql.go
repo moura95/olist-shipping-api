@@ -19,7 +19,7 @@ RETURNING id, tracking_code, product, weight_kg, destination_state, status, hire
 `
 
 type CreatePackageParams struct {
-	TrackingCode     string
+	TrackingCode     sql.NullString
 	Product          string
 	WeightKg         float64
 	DestinationState string
@@ -103,7 +103,7 @@ FROM packages
 WHERE tracking_code = $1
 `
 
-func (q *Queries) GetPackageByTrackingCode(ctx context.Context, trackingCode string) (Package, error) {
+func (q *Queries) GetPackageByTrackingCode(ctx context.Context, trackingCode sql.NullString) (Package, error) {
 	row := q.db.QueryRowContext(ctx, getPackageByTrackingCode, trackingCode)
 	var i Package
 	err := row.Scan(
@@ -242,7 +242,7 @@ SELECT EXISTS(
 )
 `
 
-func (q *Queries) TrackingCodeExists(ctx context.Context, trackingCode string) (bool, error) {
+func (q *Queries) TrackingCodeExists(ctx context.Context, trackingCode sql.NullString) (bool, error) {
 	row := q.db.QueryRowContext(ctx, trackingCodeExists, trackingCode)
 	var exists bool
 	err := row.Scan(&exists)
@@ -262,5 +262,22 @@ type UpdatePackageStatusParams struct {
 
 func (q *Queries) UpdatePackageStatus(ctx context.Context, arg UpdatePackageStatusParams) error {
 	_, err := q.db.ExecContext(ctx, updatePackageStatus, arg.ID, arg.Status)
+	return err
+}
+
+const updatePackageStatusWithTracking = `-- name: UpdatePackageStatusWithTracking :exec
+UPDATE packages
+SET status = $2, tracking_code = $3, updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdatePackageStatusWithTrackingParams struct {
+	ID           uuid.UUID
+	Status       string
+	TrackingCode sql.NullString
+}
+
+func (q *Queries) UpdatePackageStatusWithTracking(ctx context.Context, arg UpdatePackageStatusWithTrackingParams) error {
+	_, err := q.db.ExecContext(ctx, updatePackageStatusWithTracking, arg.ID, arg.Status, arg.TrackingCode)
 	return err
 }

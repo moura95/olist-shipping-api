@@ -60,6 +60,6 @@ INSERT INTO carrier_regions (carrier_id, region_id, estimated_delivery_days, pri
 ('660e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440004', 10, 9.50);
 
 INSERT INTO packages (id, tracking_code, product, weight_kg, destination_state, status) VALUES
-                                                                                            ('770e8400-e29b-41d4-a716-446655440001', 'BR72619195', 'Camisa tamanho G', 0.6, 'PR', 'criado'),
+                                                                                            ('770e8400-e29b-41d4-a716-446655440001', null, 'Camisa tamanho G', 0.6, 'PR', 'criado'),
                                                                                             ('770e8400-e29b-41d4-a716-446655440002', 'BR38897894', 'Notebook Dell', 2.5, 'SP', 'enviado'),
-                                                                                            ('770e8400-e29b-41d4-a716-446655440003', 'BR14506220', 'Livro de programação', 0.8, 'RJ', 'coletado');
+                                                                                            ('770e8400-e29b-41d4-a716-446655440003', nil, 'Livro de programação', 0.8, 'RJ', 'coletado');
