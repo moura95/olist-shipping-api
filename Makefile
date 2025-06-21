@@ -10,16 +10,16 @@ migrate-create:
 	@read -p "name of migration: " name; \
 	migrate create -dir db/migrations -ext sql -seq $$name
 
-
 down:
-	docker compose down --volumes && docker volume prune -f
+	docker compose -f deploy/docker-compose/docker-compose.yml down --volumes && docker volume prune -f
 
 up:
-	docker compose up -d
+	docker compose -f deploy/docker-compose/docker-compose.yml up -d
 	sleep 5
 	make migrate-up
 
 sqlc:
+	rm -rf internal/repository/
 	sqlc generate
 
 run:
@@ -37,11 +37,11 @@ restart:
 	sleep 10
 	make migrate-up
 	go run cmd/main.go
+
 swag:
 	swag init -g cmd/main.go
 
 test:
 	go test -v ./...
 
-
-.PHONY: migrate-up migrate-down migrate-create down up sqlc start run restart swag test sqlc
+.PHONY: migrate-up migrate-down migrate-create down up sqlc start run restart swag test
