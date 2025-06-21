@@ -182,12 +182,3 @@ func (s *PackageService) GetStates(ctx context.Context) ([]repository.ListStates
 
 	return states, nil
 }
-
-func (s *PackageService) GetStateByCode(ctx context.Context, code string) (*repository.GetStateByCodeRow, error) {
-	state, err := s.repository.GetStateByCode(ctx, code)
-	if err != nil {
-		return nil, fmt.Errorf("get state by code: %v", err)
-	}
-
-	return &state, nil
-}
