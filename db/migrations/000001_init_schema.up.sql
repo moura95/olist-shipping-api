@@ -46,7 +46,7 @@ CREATE TABLE packages (
                           product VARCHAR(255) NOT NULL,
                           weight_kg FLOAT NOT NULL CHECK (weight_kg > 0),
                           destination_state CHAR(2) NOT NULL,
-                          status VARCHAR(50) NOT NULL DEFAULT 'created',
+                          status VARCHAR(50) NOT NULL DEFAULT 'criado',
                           hired_carrier_id UUID,
                           hired_price DECIMAL(10,2),
                           hired_delivery_days INT,
@@ -55,7 +55,7 @@ CREATE TABLE packages (
 
                           CONSTRAINT fk_destination_state FOREIGN KEY (destination_state) REFERENCES states(code),
                           CONSTRAINT fk_hired_carrier FOREIGN KEY (hired_carrier_id) REFERENCES carriers(id),
-                          CONSTRAINT check_status CHECK (status IN ('created', 'awaiting_pickup', 'picked_up', 'shipped', 'delivered', 'lost'))
+                          CONSTRAINT check_status CHECK (status IN ('criado', 'esperando_coleta', 'coletado', 'enviado', 'entregue', 'extraviado'))
 );
 
 -- Indexes
