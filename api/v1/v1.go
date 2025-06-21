@@ -77,7 +77,7 @@ func HandleValidationError(ctx *gin.Context, err error) {
 			case "len":
 				messages = append(messages, ve.Field()+" deve ter "+ve.Param()+" caracteres")
 			case "brazilian_state":
-				messages = append(messages, ve.Field()+" deve ser um estado brasileiro válido")
+				messages = append(messages, ve.Field()+" deve ser um estado brasileiro válido (SC, PR, RS, SP, RJ, MG, GO)")
 			case "uuid":
 				messages = append(messages, ve.Field()+" deve ser um UUID válido")
 			default:
