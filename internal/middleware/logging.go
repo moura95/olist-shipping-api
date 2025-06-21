@@ -51,46 +51,6 @@ func RequestLogMiddleware(logger *zap.SugaredLogger) gin.HandlerFunc {
 	}
 }
 
-func ResponseLogMiddleware(logger *zap.SugaredLogger) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		startTime := time.Now()
-
-		blw := &bodyLogWriter{
-			body:           bytes.NewBufferString(""),
-			ResponseWriter: ctx.Writer,
-		}
-		ctx.Writer = blw
-
-		ctx.Next()
-
-		duration := time.Since(startTime)
-
-		traceID, _ := ctx.Get("trace_id")
-
-		logger.Infow("Response",
-			"trace_id", traceID,
-			"status", ctx.Writer.Status(),
-			"method", ctx.Request.Method,
-			"path", ctx.Request.URL.Path,
-			"duration_ms", duration.Milliseconds(),
-			"duration", duration.String(),
-			"response_size", blw.body.Len(),
-			"response_body", blw.body.String(),
-		)
-	}
-}
-
-type bodyLogWriter struct {
-	gin.ResponseWriter
-	body *bytes.Buffer
-}
-
-func (w bodyLogWriter) Write(b []byte) (int, error) {
-	w.body.Write(b)
-	return w.ResponseWriter.Write(b)
-}
-
-// generateTraceID gera um trace ID único
 func generateTraceID() string {
 	// Gera UUID v4
 	uuid := uuid.New()
@@ -109,13 +69,4 @@ func GetLoggerFromContext(ctx *gin.Context) *zap.SugaredLogger {
 	}
 	// Fallback para logger padrão
 	return zap.NewNop().Sugar()
-}
-
-func GetTraceIDFromContext(ctx *gin.Context) string {
-	if traceID, exists := ctx.Get("trace_id"); exists {
-		if id, ok := traceID.(string); ok {
-			return id
-		}
-	}
-	return "unknown"
 }
