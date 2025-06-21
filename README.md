@@ -18,14 +18,15 @@ Aplicação desenvolvida para gerenciar envios de pacotes por diferentes transpo
 
 - [Requisitos](#requisitos)
 - [Tecnologias Utilizadas](#tecnologias-utilizadas)
-- [Instalação](#instalação)
+- [Instalação](#instalacao)
 - [Como Rodar](#como-rodar)
 - [Testes](#testes)
 - [Endpoints](#endpoints)
-- [Regras de Negócio](#regras-de-negócio)
+- [Regras de Negócio](#regras-de-negocio)
 - [Arquitetura](#arquitetura)
 - [CI/CD](#cicd)
 - [Autor](#autor)
+
 
 ## 🛠️ Tecnologias Utilizadas
 
@@ -69,7 +70,7 @@ Para rodar o projeto localmente, você precisa ter instalado:
 - **Golang-Migrate** (para migrations)
 - **SQLC** (para geração de código)
 
-### Instalação das Ferramentas
+### Instalacao das Ferramentas
 
 #### Golang-Migrate
 ```bash
@@ -92,7 +93,7 @@ brew install sqlc
 go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 ```
 
-## 🚀 Instalação
+## 🚀 Instalacao
 
 ### 1. Clone o projeto
 ```bash
@@ -208,7 +209,7 @@ curl -X POST http://localhost:8080/api/v1/packages/{id}/hire \
   }'
 ```
 
-## 🏗️ Regras de Negócio
+## 🏗️ Regras de Negocio
 
 ### Transportadoras Disponíveis
 
@@ -237,7 +238,7 @@ Preço Final = Peso (kg) × Preço por KG da Transportadora
 
 ## 🏛️ Arquitetura
 
-O projeto segue uma arquiteturacom separação clara de responsabilidades:
+O projeto segue uma arquitetura com separação clara de responsabilidades:
 
 ```
 cmd/                    # Entry points
