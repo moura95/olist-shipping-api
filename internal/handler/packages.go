@@ -299,43 +299,6 @@ func (h *PackageHandler) Delete(ctx *gin.Context) {
 	v1.HandleSuccess(ctx, "Package deleted successfully")
 }
 
-func (h *PackageHandler) GetQuotes(ctx *gin.Context) {
-	logger := middleware.GetLoggerFromContext(ctx)
-	logger.Info("get quotes started")
-
-	var query v1.GetQuotesQuery
-	if err := ctx.ShouldBindQuery(&query); err != nil {
-		logger.Errorw("bind query failed", "error", err)
-		v1.HandleBadRequest(ctx, "Invalid query parameters")
-		return
-	}
-
-	if err := h.validate.Struct(query); err != nil {
-		logger.Errorw("validation failed", "error", err)
-		v1.HandleValidationError(ctx, err)
-		return
-	}
-
-	quotes, err := h.packageService.GetQuotes(ctx, query.StateCode, query.WeightKg)
-	if err != nil {
-		logger.Errorw("get quotes failed", "error", err)
-		v1.HandleInternalError(ctx, fmt.Errorf("get quotes: %v", err).Error())
-		return
-	}
-
-	var resp []v1.QuoteResponse
-	for _, quote := range quotes {
-		resp = append(resp, v1.QuoteResponse{
-			CarrierName:           &quote.Carier,
-			EstimatedPrice:        &quote.EstimatedPrice,
-			EstimatedDeliveryDays: &quote.EstimatedDeliveryDays,
-		})
-	}
-
-	logger.Infow("get quotes completed", "state_code", query.StateCode, "weight_kg", query.WeightKg, "quotes_count", len(resp))
-	v1.HandleSuccess(ctx, resp)
-}
-
 func (h *PackageHandler) HireCarrier(ctx *gin.Context) {
 	logger := middleware.GetLoggerFromContext(ctx)
 	logger.Info("hire carrier started")
@@ -369,59 +332,4 @@ func (h *PackageHandler) HireCarrier(ctx *gin.Context) {
 
 	logger.Infow("hire carrier completed", "id", id, "carrier_id", req.CarrierID)
 	v1.HandleSuccess(ctx, "Carrier hired successfully")
-}
-
-func (h *PackageHandler) ListCarriers(ctx *gin.Context) {
-	logger := middleware.GetLoggerFromContext(ctx)
-	logger.Info("list carriers started")
-
-	carriers, err := h.packageService.GetCarriers(ctx)
-	if err != nil {
-		logger.Errorw("list carriers failed", "error", err)
-		v1.HandleInternalError(ctx, fmt.Errorf("list carriers: %v", err).Error())
-		return
-	}
-
-	var resp []v1.CarrierResponse
-	for _, carrier := range carriers {
-		var createdAt *string
-		if carrier.CreatedAt.Valid {
-			formatted := carrier.CreatedAt.Time.Format(time.RFC3339)
-			createdAt = &formatted
-		}
-
-		carrierID := carrier.ID.String()
-		resp = append(resp, v1.CarrierResponse{
-			ID:        &carrierID,
-			Name:      &carrier.Name,
-			CreatedAt: createdAt,
-		})
-	}
-
-	logger.Infow("list carriers completed", "count", len(resp))
-	v1.HandleSuccess(ctx, resp)
-}
-
-func (h *PackageHandler) ListStates(ctx *gin.Context) {
-	logger := middleware.GetLoggerFromContext(ctx)
-	logger.Info("list states started")
-
-	states, err := h.packageService.GetStates(ctx)
-	if err != nil {
-		logger.Errorw("list states failed", "error", err)
-		v1.HandleInternalError(ctx, fmt.Errorf("list states: %v", err).Error())
-		return
-	}
-
-	var resp []v1.StateResponse
-	for _, state := range states {
-		resp = append(resp, v1.StateResponse{
-			Code:       &state.Code,
-			Name:       &state.Name,
-			RegionName: &state.RegionName,
-		})
-	}
-
-	logger.Infow("list states completed", "count", len(resp))
-	v1.HandleSuccess(ctx, resp)
 }

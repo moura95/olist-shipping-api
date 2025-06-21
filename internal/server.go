@@ -67,16 +67,15 @@ func NewServer(cfg config.Config, store repository.Querier, log *zap.SugaredLogg
 }
 
 func createRoutesV1(store *repository.Querier, cfg *config.Config, router *gin.Engine, log *zap.SugaredLogger) {
-	// Criar services
 	packageService := service.NewPackageService(*store, *cfg, log)
 
-	// Criar handlers
 	packageHandler := handler.NewPackageHandler(packageService, cfg, log)
+	quoteHandler := handler.NewQuoteHandler(packageService, cfg, log)
+	carrierHandler := handler.NewCarrierHandler(packageService, cfg, log)
+	stateHandler := handler.NewStateHandler(packageService, cfg, log)
 
-	// Configurar rotas
 	apiV1 := router.Group("/api/v1")
 	{
-		// Rotas de packages
 		packages := apiV1.Group("/packages")
 		{
 			packages.GET("", packageHandler.List)
@@ -87,21 +86,18 @@ func createRoutesV1(store *repository.Querier, cfg *config.Config, router *gin.E
 			packages.DELETE("/:id", packageHandler.Delete)
 		}
 
-		// Rota de tracking
 		apiV1.GET("/packages/tracking/:tracking_code", packageHandler.GetByTrackingCode)
 
-		// Rota de cotações
-		apiV1.GET("/quotes", packageHandler.GetQuotes)
+		apiV1.GET("/quotes", quoteHandler.GetQuotes)
 
-		// Rotas auxiliares
 		carriers := apiV1.Group("/carriers")
 		{
-			carriers.GET("", packageHandler.ListCarriers)
+			carriers.GET("", carrierHandler.List)
 		}
 
 		states := apiV1.Group("/states")
 		{
-			states.GET("", packageHandler.ListStates)
+			states.GET("", stateHandler.List)
 		}
 	}
 }
