@@ -14,7 +14,7 @@ import (
 
 const createPackage = `-- name: CreatePackage :one
 INSERT INTO packages (tracking_code, product, weight_kg, destination_state, status)
-VALUES ($1, $2, $3, $4, 'created')
+VALUES ($1, $2, $3, $4, 'criado')
 RETURNING id, tracking_code, product, weight_kg, destination_state, status, hired_carrier_id, hired_price, hired_delivery_days, created_at, updated_at
 `
 
@@ -172,7 +172,7 @@ UPDATE packages
 SET hired_carrier_id = $2,
     hired_price = $3,
     hired_delivery_days = $4,
-    status = 'awaiting_pickup',
+    status = 'esperando_coleta',
     updated_at = NOW()
 WHERE id = $1
 `
