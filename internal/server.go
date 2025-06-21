@@ -54,7 +54,6 @@ func NewServer(cfg config.Config, store repository.Querier, log *zap.SugaredLogg
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	router.Use(middleware.RequestLogMiddleware(log))
-	router.Use(middleware.ResponseLogMiddleware(log))
 
 	// Middlewares existentes
 	router.Use(middleware.RateLimitMiddleware())
@@ -89,7 +88,7 @@ func createRoutesV1(store *repository.Querier, cfg *config.Config, router *gin.E
 		}
 
 		// Rota de tracking
-		apiV1.GET("/track/:tracking_code", packageHandler.GetByTrackingCode)
+		apiV1.GET("/packages/tracking/:tracking_code", packageHandler.GetByTrackingCode)
 
 		// Rota de cotações
 		apiV1.GET("/quotes", packageHandler.GetQuotes)
