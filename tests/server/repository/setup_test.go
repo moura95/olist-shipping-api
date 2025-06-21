@@ -73,7 +73,7 @@ func TestMain(m *testing.M) {
 }
 
 func runMigrations(db *sql.DB) error {
-	migrationsPath := "../../db/migrations"
+	migrationsPath := "../../../db/migrations"
 
 	files, err := ioutil.ReadDir(migrationsPath)
 	if err != nil {
