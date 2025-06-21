@@ -8,8 +8,7 @@ on:
 
 env:
   PROJECT_ID: moura-366701
-  GAR_LOCATION: southamerica-east1-docker.pkg.dev
-  REPOSITORY: olist-repo
+  GAR_LOCATION: gcr.io
   SERVICE: olist-api
   REGION: southamerica-east1
 
@@ -19,37 +18,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v2
 
-      - name: Autenticar no Google Cloud
+      - name: Login to GCR
+        uses: docker/login-action@v1
+        with:
+          registry: gcr.io
+          username: _json_key
+          password: ${{ secrets.SERVICE_ACCOUNT_KEYS }}
+
+      - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.SERVICE_ACCOUNT_KEYS }}
 
-      - name: Configurar Docker para Artifact Registry
-        run: |
-          gcloud auth configure-docker ${{ env.GAR_LOCATION }} --quiet
+      - name: Build and Push Container
+        run: |-
+          docker build -t "${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:latest" . -f deploy/build/Dockerfile
+          docker push "${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:latest"
 
-      - name: Build e Push da imagem para Artifact Registry
-        run: |
-          docker build -t "${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:latest" . -f deploy/build/Dockerfile
-          docker push "${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:latest"
-
-      - name: Deploy no Cloud Run
+      - name: Deploy to Cloud Run
+        id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
         with:
-          service: ${{ env.SERVICE }}
-          region: ${{ env.REGION }}
-          image: "${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:latest"
-          project_id: ${{ env.PROJECT_ID }}
-          timeout: 300s
-          cpu: 1
-          memory: 1Gi
-          min_instances: 0
-          max_instances: 10
-          port: 8080
-          allow_unauthenticated: true
           env_vars: |
             DB_SOURCE=${{ secrets.DB_SOURCE }}
             GIN_MODE=release
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          image: ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:latest
+          project_id: ${{ env.PROJECT_ID }}
