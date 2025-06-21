@@ -140,7 +140,7 @@ func TestPackageServiceIntegration_CreateAndGet(t *testing.T) {
 	assert.Equal(t, "Integration Test Product", createdPkg.Product)
 	assert.Equal(t, 1.5, createdPkg.WeightKg)
 	assert.Equal(t, "SP", createdPkg.DestinationState)
-	assert.Equal(t, "created", createdPkg.Status)
+	assert.Equal(t, "criado", createdPkg.Status)
 
 	retrievedPkg, err := service.GetByID(ctx, createdPkg.ID.String())
 	require.NoError(t, err)
@@ -212,23 +212,23 @@ func TestPackageServiceIntegration_UpdateStatus(t *testing.T) {
 	createdPkg, err := service.Create(ctx, "Status Test Product", 1.0, "SP")
 	require.NoError(t, err)
 
-	assert.Equal(t, "created", createdPkg.Status)
+	assert.Equal(t, "criado", createdPkg.Status)
 
-	err = service.UpdateStatus(ctx, createdPkg.ID.String(), "shipped")
+	err = service.UpdateStatus(ctx, createdPkg.ID.String(), "enviado")
 	require.NoError(t, err)
 
 	updatedPkg, err := service.GetByID(ctx, createdPkg.ID.String())
 	require.NoError(t, err)
 
-	assert.Equal(t, "shipped", updatedPkg.Status)
+	assert.Equal(t, "enviado", updatedPkg.Status)
 
-	err = service.UpdateStatus(ctx, createdPkg.ID.String(), "delivered")
+	err = service.UpdateStatus(ctx, createdPkg.ID.String(), "entregue")
 	require.NoError(t, err)
 
 	finalPkg, err := service.GetByID(ctx, createdPkg.ID.String())
 	require.NoError(t, err)
 
-	assert.Equal(t, "delivered", finalPkg.Status)
+	assert.Equal(t, "entregue", finalPkg.Status)
 }
 
 func TestPackageServiceIntegration_Delete(t *testing.T) {
@@ -294,7 +294,7 @@ func TestPackageServiceIntegration_HireCarrier(t *testing.T) {
 	createdPkg, err := service.Create(ctx, "Hire Carrier Test", 2.0, "SP")
 	require.NoError(t, err)
 
-	assert.Equal(t, "created", createdPkg.Status)
+	assert.Equal(t, "criado", createdPkg.Status)
 	assert.False(t, createdPkg.HiredCarrierID.Valid)
 
 	carrierID := "660e8400-e29b-41d4-a716-446655440001"
@@ -307,7 +307,7 @@ func TestPackageServiceIntegration_HireCarrier(t *testing.T) {
 	updatedPkg, err := service.GetByID(ctx, createdPkg.ID.String())
 	require.NoError(t, err)
 
-	assert.Equal(t, "awaiting_pickup", updatedPkg.Status)
+	assert.Equal(t, "esperando_coleta", updatedPkg.Status)
 	assert.True(t, updatedPkg.HiredCarrierID.Valid)
 	assert.Equal(t, carrierID, updatedPkg.HiredCarrierID.UUID.String())
 	assert.True(t, updatedPkg.HiredPrice.Valid)
@@ -438,7 +438,7 @@ func TestPackageServiceIntegration_ErrorCases(t *testing.T) {
 	})
 
 	t.Run("Update status with invalid UUID", func(t *testing.T) {
-		err := service.UpdateStatus(ctx, "invalid-uuid", "shipped")
+		err := service.UpdateStatus(ctx, "invalid-uuid", "enviado")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "parse package id")
 	})

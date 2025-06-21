@@ -31,7 +31,7 @@ func TestCreatePackage(t *testing.T) {
 	assert.Equal(t, arg.Product, pkg.Product)
 	assert.Equal(t, arg.WeightKg, pkg.WeightKg)
 	assert.Equal(t, arg.DestinationState, pkg.DestinationState)
-	assert.Equal(t, "created", pkg.Status)
+	assert.Equal(t, "criado", pkg.Status)
 	assert.NotEmpty(t, pkg.CreatedAt)
 }
 
@@ -131,7 +131,7 @@ func TestUpdatePackageStatus(t *testing.T) {
 
 	updateArg := repository.UpdatePackageStatusParams{
 		ID:     createdPkg.ID,
-		Status: "shipped",
+		Status: "enviado",
 	}
 
 	err = testQueries.UpdatePackageStatus(ctx, updateArg)
@@ -139,7 +139,7 @@ func TestUpdatePackageStatus(t *testing.T) {
 
 	updatedPkg, err := testQueries.GetPackageById(ctx, createdPkg.ID)
 	require.NoError(t, err)
-	assert.Equal(t, "shipped", updatedPkg.Status)
+	assert.Equal(t, "enviado", updatedPkg.Status)
 }
 
 func TestHireCarrier(t *testing.T) {
@@ -179,7 +179,7 @@ func TestHireCarrier(t *testing.T) {
 
 	updatedPkg, err := testQueries.GetPackageById(ctx, createdPkg.ID)
 	require.NoError(t, err)
-	assert.Equal(t, "awaiting_pickup", updatedPkg.Status)
+	assert.Equal(t, "esperando_coleta", updatedPkg.Status)
 	assert.True(t, updatedPkg.HiredCarrierID.Valid)
 	assert.Equal(t, carrierID, updatedPkg.HiredCarrierID.UUID)
 	assert.True(t, updatedPkg.HiredPrice.Valid)

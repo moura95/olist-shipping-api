@@ -38,7 +38,7 @@ func TestPackageService_Create(t *testing.T) {
 					Product:          "Test Product",
 					WeightKg:         2.5,
 					DestinationState: "SP",
-					Status:           "created",
+					Status:           "criado",
 					CreatedAt:        sql.NullTime{Valid: true},
 				}
 
@@ -64,7 +64,7 @@ func TestPackageService_Create(t *testing.T) {
 					Product:          "Test Product",
 					WeightKg:         1.0,
 					DestinationState: "RJ",
-					Status:           "created",
+					Status:           "criado",
 				}
 
 				repo.On("CreatePackage", mock.Anything, mock.AnythingOfType("repository.CreatePackageParams")).Return(expectedPackage, nil)
@@ -93,7 +93,7 @@ func TestPackageService_Create(t *testing.T) {
 				assert.Equal(t, tt.weightKg, result.WeightKg)
 				assert.Equal(t, tt.destinationState, result.DestinationState)
 				assert.NotEmpty(t, result.TrackingCode)
-				assert.Equal(t, "created", result.Status)
+				assert.Equal(t, "criado", result.Status)
 			}
 		})
 	}
@@ -117,7 +117,7 @@ func TestPackageService_GetByID(t *testing.T) {
 					Product:          "Test Product",
 					WeightKg:         2.5,
 					DestinationState: "SP",
-					Status:           "created",
+					Status:           "criado",
 				}
 
 				repo.On("GetPackageById", mock.Anything, expectedUUID).Return(expectedPackage, nil)
@@ -182,7 +182,7 @@ func TestPackageService_GetByTrackingCode(t *testing.T) {
 					Product:          "Test Product",
 					WeightKg:         2.5,
 					DestinationState: "SP",
-					Status:           "created",
+					Status:           "criado",
 				}
 
 				repo.On("GetPackageByTrackingCode", mock.Anything, "BR12345678").Return(expectedPackage, nil)
@@ -239,7 +239,7 @@ func TestPackageService_GetAll(t *testing.T) {
 						Product:          "Product 1",
 						WeightKg:         1.0,
 						DestinationState: "SP",
-						Status:           "created",
+						Status:           "criado",
 					},
 					{
 						ID:               uuid.New(),
@@ -247,7 +247,7 @@ func TestPackageService_GetAll(t *testing.T) {
 						Product:          "Product 2",
 						WeightKg:         2.0,
 						DestinationState: "RJ",
-						Status:           "shipped",
+						Status:           "enviado",
 					},
 				}
 
@@ -296,12 +296,12 @@ func TestPackageService_UpdateStatus(t *testing.T) {
 		{
 			name:      "Update package status successfully",
 			packageID: "550e8400-e29b-41d4-a716-446655440000",
-			status:    "shipped",
+			status:    "enviado",
 			setupMocked: func(repo *repository.QuerierMocked) {
 				expectedUUID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 				expectedParams := repository.UpdatePackageStatusParams{
 					ID:     expectedUUID,
-					Status: "shipped",
+					Status: "enviado",
 				}
 
 				repo.On("UpdatePackageStatus", mock.Anything, expectedParams).Return(nil)
@@ -310,7 +310,7 @@ func TestPackageService_UpdateStatus(t *testing.T) {
 		{
 			name:          "Update package with invalid UUID",
 			packageID:     "invalid-uuid",
-			status:        "shipped",
+			status:        "enviado",
 			setupMocked:   func(repo *repository.QuerierMocked) {},
 			expectedError: "parse package id",
 		},
