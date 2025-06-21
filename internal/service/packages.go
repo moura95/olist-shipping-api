@@ -116,20 +116,6 @@ func (s *PackageService) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *PackageService) GetQuotes(ctx context.Context, stateCode string, weightKg float64) ([]repository.GetQuotesForPackageRow, error) {
-	arg := repository.GetQuotesForPackageParams{
-		StateCode: stateCode,
-		WeightKg:  fmt.Sprintf("%.2f", weightKg),
-	}
-
-	quotes, err := s.repository.GetQuotesForPackage(ctx, arg)
-	if err != nil {
-		return nil, fmt.Errorf("get quotes for package: %v", err)
-	}
-
-	return quotes, nil
-}
-
 func (s *PackageService) HireCarrier(ctx context.Context, packageID, carrierID string, price string, deliveryDays int32) error {
 	pkg, err := s.GetByID(ctx, packageID)
 	if err != nil {
@@ -167,24 +153,6 @@ func (s *PackageService) HireCarrier(ctx context.Context, packageID, carrierID s
 	}
 
 	return s.repository.HireCarrier(ctx, arg)
-}
-
-func (s *PackageService) GetCarriers(ctx context.Context) ([]repository.Carrier, error) {
-	carriers, err := s.repository.ListCarriers(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list carriers: %v", err)
-	}
-
-	return carriers, nil
-}
-
-func (s *PackageService) GetStates(ctx context.Context) ([]repository.ListStatesRow, error) {
-	states, err := s.repository.ListStates(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list states: %v", err)
-	}
-
-	return states, nil
 }
 
 func (s *PackageService) ValidateCarrierForRegion(ctx context.Context, carrierID, stateCode string) error {
