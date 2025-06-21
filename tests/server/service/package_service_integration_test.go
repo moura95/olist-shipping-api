@@ -452,7 +452,7 @@ func TestPackageServiceIntegration_ErrorCases(t *testing.T) {
 	t.Run("Hire carrier with invalid package UUID", func(t *testing.T) {
 		err := service.HireCarrier(ctx, "invalid-uuid", "660e8400-e29b-41d4-a716-446655440001", "25.90", 5)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "parse package id")
+		assert.Contains(t, err.Error(), "package not found")
 	})
 
 	t.Run("Hire carrier with invalid carrier UUID", func(t *testing.T) {
@@ -461,7 +461,7 @@ func TestPackageServiceIntegration_ErrorCases(t *testing.T) {
 
 		err = service.HireCarrier(ctx, pkg.ID.String(), "invalid-uuid", "25.90", 5)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "parse carrier id")
+		assert.Contains(t, err.Error(), "invalid carrier ID")
 	})
 
 	t.Run("Get quotes for invalid state", func(t *testing.T) {

@@ -463,7 +463,40 @@ func TestPackageService_HireCarrier(t *testing.T) {
 			setupMocked: func(repo *repository.QuerierMocked) {
 				expectedPkgUUID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 				expectedCarrierUUID := uuid.MustParse("660e8400-e29b-41d4-a716-446655440001")
+				regionUUID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440002")
 
+				// Mock GetByID (para buscar o pacote)
+				mockPackage := repository.Package{
+					ID:               expectedPkgUUID,
+					TrackingCode:     "BR12345678",
+					Product:          "Test Product",
+					WeightKg:         2.5,
+					DestinationState: "SP",
+					Status:           "criado",
+				}
+				repo.On("GetPackageById", mock.Anything, expectedPkgUUID).Return(mockPackage, nil)
+
+				// Mock GetRegionByState (para validar região)
+				mockRegion := repository.GetRegionByStateRow{
+					ID:   regionUUID,
+					Name: "Sudeste",
+				}
+				repo.On("GetRegionByState", mock.Anything, "SP").Return(mockRegion, nil)
+
+				// Mock GetCarrierRegions (para validar se transportadora atende região)
+				mockCarrierRegions := []repository.GetCarrierRegionsRow{
+					{
+						ID:                    uuid.New(),
+						CarrierID:             expectedCarrierUUID,
+						RegionID:              regionUUID,
+						EstimatedDeliveryDays: 4,
+						PricePerKg:            "5.90",
+						RegionName:            "Sudeste",
+					},
+				}
+				repo.On("GetCarrierRegions", mock.Anything, expectedCarrierUUID).Return(mockCarrierRegions, nil)
+
+				// Mock HireCarrier (para salvar)
 				expectedParams := repository.HireCarrierParams{
 					ID: expectedPkgUUID,
 					HiredCarrierID: uuid.NullUUID{
@@ -479,7 +512,6 @@ func TestPackageService_HireCarrier(t *testing.T) {
 						Valid: true,
 					},
 				}
-
 				repo.On("HireCarrier", mock.Anything, expectedParams).Return(nil)
 			},
 		},
@@ -490,16 +522,64 @@ func TestPackageService_HireCarrier(t *testing.T) {
 			price:         "25.90",
 			deliveryDays:  5,
 			setupMocked:   func(repo *repository.QuerierMocked) {},
-			expectedError: "parse package id",
+			expectedError: "package not found",
 		},
 		{
-			name:          "Hire carrier with invalid carrier UUID",
-			packageID:     "550e8400-e29b-41d4-a716-446655440000",
-			carrierID:     "invalid-uuid",
-			price:         "25.90",
-			deliveryDays:  5,
-			setupMocked:   func(repo *repository.QuerierMocked) {},
-			expectedError: "parse carrier id",
+			name:         "Hire carrier with invalid carrier UUID",
+			packageID:    "550e8400-e29b-41d4-a716-446655440000",
+			carrierID:    "invalid-uuid",
+			price:        "25.90",
+			deliveryDays: 5,
+			setupMocked: func(repo *repository.QuerierMocked) {
+				expectedPkgUUID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
+
+				// Mock GetByID (necessário para chegar na validação do carrier)
+				mockPackage := repository.Package{
+					ID:               expectedPkgUUID,
+					TrackingCode:     "BR12345678",
+					Product:          "Test Product",
+					WeightKg:         2.5,
+					DestinationState: "SP",
+					Status:           "criado",
+				}
+				repo.On("GetPackageById", mock.Anything, expectedPkgUUID).Return(mockPackage, nil)
+			},
+			expectedError: "invalid carrier ID",
+		},
+		{
+			name:         "Hire carrier that does not serve region",
+			packageID:    "550e8400-e29b-41d4-a716-446655440000",
+			carrierID:    "660e8400-e29b-41d4-a716-446655440001",
+			price:        "25.90",
+			deliveryDays: 5,
+			setupMocked: func(repo *repository.QuerierMocked) {
+				expectedPkgUUID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
+				expectedCarrierUUID := uuid.MustParse("660e8400-e29b-41d4-a716-446655440001")
+				regionUUID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440005") // Norte
+
+				// Mock GetByID
+				mockPackage := repository.Package{
+					ID:               expectedPkgUUID,
+					TrackingCode:     "BR12345678",
+					Product:          "Test Product",
+					WeightKg:         2.5,
+					DestinationState: "AM", // Amazonas (Norte)
+					Status:           "criado",
+				}
+				repo.On("GetPackageById", mock.Anything, expectedPkgUUID).Return(mockPackage, nil)
+
+				// Mock GetRegionByState
+				mockRegion := repository.GetRegionByStateRow{
+					ID:   regionUUID,
+					Name: "Norte",
+				}
+				repo.On("GetRegionByState", mock.Anything, "AM").Return(mockRegion, nil)
+
+				// Mock GetCarrierRegions (transportadora não atende Norte)
+				mockCarrierRegions := []repository.GetCarrierRegionsRow{} // Vazio = não atende
+				repo.On("GetCarrierRegions", mock.Anything, expectedCarrierUUID).Return(mockCarrierRegions, nil)
+			},
+			expectedError: "carrier does not serve this region",
 		},
 	}
 
