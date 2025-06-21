@@ -48,22 +48,18 @@ func NewServer(cfg config.Config, store repository.Querier, log *zap.SugaredLogg
 
 	router = gin.Default()
 
-	docs.SwaggerInfo.BasePath = "/api/v1"
+	docs.SwaggerInfo.BasePath = ""
 
 	router.GET("/healthz", func(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 	})
 
-	// Swagger
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
-	router.Use(middleware.RequestLogMiddleware(log))
-
-	// Middlewares existentes
 	router.Use(middleware.RateLimitMiddleware())
 	router.Use(middleware.CORSMiddleware())
+	router.Use(middleware.RequestLogMiddleware(log))
 
-	// Init all Routers
 	createRoutesV1(&store, server.config, router, log)
 
 	server.router = router
