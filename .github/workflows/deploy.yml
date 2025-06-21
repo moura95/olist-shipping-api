@@ -1,0 +1,49 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+      - feature/devops
+
+env:
+  PROJECT_ID: moura-366701
+  GAR_LOCATION: gcr.io
+  SERVICE: meli-api
+  REGION: southamerica-east1
+
+jobs:
+  cloudrunProd:
+    name: Setup, Build, Publish, and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.SERVICE_ACCOUNT_KEYS }}
+
+      - name: Login to GCR
+        uses: docker/login-action@v2
+        with:
+          registry: gcr.io
+          username: _json_key
+          password: ${{ secrets.SERVICE_ACCOUNT_KEYS }}
+
+      - name: Build and Push Container
+        run: |
+          docker build -t "${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:latest" ./deploy/build
+          docker push "${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:latest"
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          image: ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:latest
+          project_id: ${{ env.PROJECT_ID }}
+          env_vars: |
+            DB_SOURCE=${{ secrets.DB_SOURCE }}
