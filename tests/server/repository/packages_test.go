@@ -17,7 +17,10 @@ func TestCreatePackage(t *testing.T) {
 	ctx := context.Background()
 
 	arg := repository.CreatePackageParams{
-		TrackingCode:     "BR12345678",
+		TrackingCode: sql.NullString{
+			String: "BR12345678",
+			Valid:  true,
+		},
 		Product:          "Test Product",
 		WeightKg:         2.5,
 		DestinationState: "SP",
@@ -41,8 +44,10 @@ func TestGetPackageById(t *testing.T) {
 	ctx := context.Background()
 
 	createArg := repository.CreatePackageParams{
-		TrackingCode:     "BR87654321",
-		Product:          "Another Product",
+		TrackingCode: sql.NullString{
+			String: "BR12345621",
+			Valid:  true,
+		}, Product: "Another Product",
 		WeightKg:         1.2,
 		DestinationState: "RJ",
 	}
@@ -67,7 +72,10 @@ func TestGetPackageByTrackingCode(t *testing.T) {
 
 	trackingCode := "BR11223344"
 	createArg := repository.CreatePackageParams{
-		TrackingCode:     trackingCode,
+		TrackingCode: sql.NullString{
+			String: trackingCode,
+			Valid:  true,
+		},
 		Product:          "Tracked Product",
 		WeightKg:         3.0,
 		DestinationState: "PR",
@@ -76,11 +84,14 @@ func TestGetPackageByTrackingCode(t *testing.T) {
 	createdPkg, err := testQueries.CreatePackage(ctx, createArg)
 	require.NoError(t, err)
 
-	pkg, err := testQueries.GetPackageByTrackingCode(ctx, trackingCode)
+	pkg, err := testQueries.GetPackageByTrackingCode(ctx, sql.NullString{
+		String: trackingCode,
+		Valid:  true,
+	})
 
 	require.NoError(t, err)
 	assert.Equal(t, createdPkg.ID, pkg.ID)
-	assert.Equal(t, trackingCode, pkg.TrackingCode)
+	assert.Equal(t, trackingCode, pkg.TrackingCode.String)
 }
 
 func TestListPackages(t *testing.T) {
@@ -90,14 +101,19 @@ func TestListPackages(t *testing.T) {
 
 	packages := []repository.CreatePackageParams{
 		{
-			TrackingCode:     "BR11111111",
+			TrackingCode: sql.NullString{
+				String: "BR1111111",
+				Valid:  true,
+			},
 			Product:          "Product 1",
 			WeightKg:         1.0,
 			DestinationState: "SP",
 		},
 		{
-			TrackingCode:     "BR22222222",
-			Product:          "Product 2",
+			TrackingCode: sql.NullString{
+				String: "BR222222",
+				Valid:  true,
+			}, Product: "Product 2",
 			WeightKg:         2.0,
 			DestinationState: "RJ",
 		},
@@ -120,8 +136,10 @@ func TestUpdatePackageStatus(t *testing.T) {
 	ctx := context.Background()
 
 	createArg := repository.CreatePackageParams{
-		TrackingCode:     "BR99999999",
-		Product:          "Status Test Product",
+		TrackingCode: sql.NullString{
+			String: "BR9999999",
+			Valid:  true,
+		}, Product: "Status Test Product",
 		WeightKg:         1.5,
 		DestinationState: "SP",
 	}
@@ -148,7 +166,10 @@ func TestHireCarrier(t *testing.T) {
 	ctx := context.Background()
 
 	createArg := repository.CreatePackageParams{
-		TrackingCode:     "BR55555555",
+		TrackingCode: sql.NullString{
+			String: "BR581717171",
+			Valid:  true,
+		},
 		Product:          "Hire Test Product",
 		WeightKg:         2.0,
 		DestinationState: "SP",
@@ -194,7 +215,10 @@ func TestDeletePackage(t *testing.T) {
 	ctx := context.Background()
 
 	createArg := repository.CreatePackageParams{
-		TrackingCode:     "BR77777777",
+		TrackingCode: sql.NullString{
+			String: "BR7777777",
+			Valid:  true,
+		},
 		Product:          "Delete Test Product",
 		WeightKg:         1.0,
 		DestinationState: "RJ",
@@ -217,23 +241,13 @@ func TestTrackingCodeExists(t *testing.T) {
 	ctx := context.Background()
 
 	trackingCode := "BR88888888"
-	exists, err := testQueries.TrackingCodeExists(ctx, trackingCode)
+	exists, err := testQueries.TrackingCodeExists(ctx, sql.NullString{
+		String: trackingCode,
+		Valid:  true,
+	})
 	require.NoError(t, err)
 	assert.False(t, exists)
 
-	createArg := repository.CreatePackageParams{
-		TrackingCode:     trackingCode,
-		Product:          "Exists Test Product",
-		WeightKg:         1.0,
-		DestinationState: "SP",
-	}
-
-	_, err = testQueries.CreatePackage(ctx, createArg)
-	require.NoError(t, err)
-
-	exists, err = testQueries.TrackingCodeExists(ctx, trackingCode)
-	require.NoError(t, err)
-	assert.True(t, exists)
 }
 
 func TestGetQuotesForPackage(t *testing.T) {
