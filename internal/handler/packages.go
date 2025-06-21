@@ -34,6 +34,15 @@ func NewPackageHandler(packageService *service.PackageService, cfg *config.Confi
 	}
 }
 
+// List godoc
+// @Summary      List all packages
+// @Description  Get all packages with pagination support
+// @Tags         packages
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  v1.Response{data=[]v1.PackageResponse}
+// @Failure      500  {object}  v1.Response
+// @Router       /packages [get]
 func (h *PackageHandler) List(ctx *gin.Context) {
 	logger := middleware.GetLoggerFromContext(ctx)
 	logger.Info("list packages started")
@@ -83,6 +92,17 @@ func (h *PackageHandler) List(ctx *gin.Context) {
 	v1.HandleSuccess(ctx, resp)
 }
 
+// GetByID godoc
+// @Summary      Get package by ID
+// @Description  Get package details by package ID
+// @Tags         packages
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "Package ID"
+// @Success      200  {object}  v1.Response{data=v1.PackageResponse}
+// @Failure      400  {object}  v1.Response
+// @Failure      404  {object}  v1.Response
+// @Router       /packages/{id} [get]
 func (h *PackageHandler) GetByID(ctx *gin.Context) {
 	logger := middleware.GetLoggerFromContext(ctx)
 	logger.Info("get package by id started")
@@ -136,6 +156,17 @@ func (h *PackageHandler) GetByID(ctx *gin.Context) {
 	v1.HandleSuccess(ctx, response)
 }
 
+// GetByTrackingCode godoc
+// @Summary      Get package by tracking code
+// @Description  Get package details by tracking code
+// @Tags         packages
+// @Accept       json
+// @Produce      json
+// @Param        tracking_code  path      string  true  "Tracking Code"
+// @Success      200           {object}  v1.Response{data=v1.PackageResponse}
+// @Failure      400           {object}  v1.Response
+// @Failure      404           {object}  v1.Response
+// @Router       /packages/tracking/{tracking_code} [get]
 func (h *PackageHandler) GetByTrackingCode(ctx *gin.Context) {
 	logger := middleware.GetLoggerFromContext(ctx)
 	logger.Info("get package by tracking code started")
@@ -189,6 +220,17 @@ func (h *PackageHandler) GetByTrackingCode(ctx *gin.Context) {
 	v1.HandleSuccess(ctx, response)
 }
 
+// Create godoc
+// @Summary      Create a new package
+// @Description  Create a new package for shipping
+// @Tags         packages
+// @Accept       json
+// @Produce      json
+// @Param        request  body      v1.CreatePackageRequest  true  "Package data"
+// @Success      201      {object}  v1.Response{data=v1.PackageResponse}
+// @Failure      400      {object}  v1.Response
+// @Failure      500      {object}  v1.Response
+// @Router       /packages [post]
 func (h *PackageHandler) Create(ctx *gin.Context) {
 	logger := middleware.GetLoggerFromContext(ctx)
 	logger.Info("create package started")
@@ -242,6 +284,18 @@ func (h *PackageHandler) Create(ctx *gin.Context) {
 	v1.HandleCreated(ctx, response)
 }
 
+// UpdateStatus godoc
+// @Summary      Update package status
+// @Description  Update the status of a package
+// @Tags         packages
+// @Accept       json
+// @Produce      json
+// @Param        id       path  string                        true  "Package ID"
+// @Param        request  body  v1.UpdatePackageStatusRequest  true  "Status data"
+// @Success      204      "No Content"
+// @Failure      400      {object}  v1.Response
+// @Failure      500      {object}  v1.Response
+// @Router       /packages/{id}/status [patch]
 func (h *PackageHandler) UpdateStatus(ctx *gin.Context) {
 	logger := middleware.GetLoggerFromContext(ctx)
 	logger.Info("update package status started")
@@ -277,6 +331,17 @@ func (h *PackageHandler) UpdateStatus(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
+// Delete godoc
+// @Summary      Delete a package
+// @Description  Delete a package by ID
+// @Tags         packages
+// @Accept       json
+// @Produce      json
+// @Param        id  path      string  true  "Package ID"
+// @Success      200  {object}  v1.Response
+// @Failure      400  {object}  v1.Response
+// @Failure      500  {object}  v1.Response
+// @Router       /packages/{id} [delete]
 func (h *PackageHandler) Delete(ctx *gin.Context) {
 	logger := middleware.GetLoggerFromContext(ctx)
 	logger.Info("delete package started")
@@ -299,6 +364,18 @@ func (h *PackageHandler) Delete(ctx *gin.Context) {
 	v1.HandleSuccess(ctx, "Package deleted successfully")
 }
 
+// HireCarrier godoc
+// @Summary      Hire carrier for package
+// @Description  Hire a carrier to deliver the package
+// @Tags         packages
+// @Accept       json
+// @Produce      json
+// @Param        id       path  string                 true  "Package ID"
+// @Param        request  body  v1.HireCarrierRequest  true  "Carrier hire data"
+// @Success      200      {object}  v1.Response
+// @Failure      400      {object}  v1.Response
+// @Failure      500      {object}  v1.Response
+// @Router       /packages/{id}/hire [post]
 func (h *PackageHandler) HireCarrier(ctx *gin.Context) {
 	logger := middleware.GetLoggerFromContext(ctx)
 	logger.Info("hire carrier started")

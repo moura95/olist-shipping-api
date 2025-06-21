@@ -32,6 +32,15 @@ func NewCarrierHandler(packageService *service.PackageService, cfg *config.Confi
 	}
 }
 
+// List godoc
+// @Summary      List all carriers
+// @Description  Get all available carriers
+// @Tags         carriers
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  v1.Response{data=[]v1.CarrierResponse}
+// @Failure      500  {object}  v1.Response
+// @Router       /carriers [get]
 func (h *CarrierHandler) List(ctx *gin.Context) {
 	logger := middleware.GetLoggerFromContext(ctx)
 	logger.Info("list carriers started")

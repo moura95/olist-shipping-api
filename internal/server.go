@@ -23,16 +23,20 @@ type Server struct {
 	logger *zap.SugaredLogger
 }
 
-//      @title                  Olist Api
-//      @version                1.0
-//      @description    Api Shipping
-//      @termsOfService http://swagger.io/terms/
+// @title           Olist Shipping API
+// @version         1.0
+// @description     API para gerenciamento de entregas da Olist
+// @termsOfService  http://swagger.io/terms/
 
-//      @license.name   Apache 2.0
-//      @license.url    http://www.apache.org/licenses/LICENSE-2.0.html
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@olist.com
 
-// @host           localhost:8080
-// @BasePath       /api/v1
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8080
+// @BasePath  /api/v1
 func NewServer(cfg config.Config, store repository.Querier, log *zap.SugaredLogger) *Server {
 
 	server := &Server{

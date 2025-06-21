@@ -31,6 +31,18 @@ func NewQuoteHandler(packageService *service.PackageService, cfg *config.Config,
 	}
 }
 
+// GetQuotes godoc
+// @Summary      Get shipping quotes
+// @Description  Get shipping quotes for a package based on destination state and weight
+// @Tags         quotes
+// @Accept       json
+// @Produce      json
+// @Param        estado_destino  query     string   true  "Destination state code"
+// @Param        peso_kg         query     number   true  "Package weight in kg"
+// @Success      200             {object}  v1.Response{data=[]v1.QuoteResponse}
+// @Failure      400             {object}  v1.Response
+// @Failure      500             {object}  v1.Response
+// @Router       /quotes [get]
 func (h *QuoteHandler) GetQuotes(ctx *gin.Context) {
 	logger := middleware.GetLoggerFromContext(ctx)
 	logger.Info("get quotes started")

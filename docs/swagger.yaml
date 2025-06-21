@@ -1,4 +1,435 @@
+basePath: /api/v1
+definitions:
+  v1.CarrierResponse:
+    properties:
+      criado_em:
+        type: string
+      id:
+        type: string
+      nome:
+        type: string
+    type: object
+  v1.CreatePackageRequest:
+    properties:
+      estado_destino:
+        type: string
+      peso_kg:
+        type: number
+      produto:
+        type: string
+    required:
+    - estado_destino
+    - peso_kg
+    - produto
+    type: object
+  v1.HireCarrierRequest:
+    properties:
+      prazo_dias:
+        type: integer
+      preco:
+        type: string
+      transportadora_id:
+        type: string
+    required:
+    - prazo_dias
+    - preco
+    - transportadora_id
+    type: object
+  v1.PackageResponse:
+    properties:
+      atualizado_em:
+        type: string
+      codigo_rastreio:
+        type: string
+      criado_em:
+        type: string
+      estado_destino:
+        type: string
+      id:
+        type: string
+      peso_kg:
+        type: number
+      prazo_contratado_dias:
+        type: integer
+      preco_contratado:
+        type: string
+      produto:
+        type: string
+      status:
+        type: string
+      transportadora_id:
+        type: string
+    type: object
+  v1.QuoteResponse:
+    properties:
+      prazo_estimado_dias:
+        type: integer
+      preco_estimado:
+        type: number
+      transportadora:
+        type: string
+    type: object
+  v1.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+  v1.StateResponse:
+    properties:
+      codigo:
+        type: string
+      nome:
+        type: string
+      nome_regiao:
+        type: string
+    type: object
+  v1.UpdatePackageStatusRequest:
+    properties:
+      status:
+        enum:
+        - criado
+        - esperando_coleta
+        - coletado
+        - enviado
+        - entregue
+        - extraviado
+        type: string
+    required:
+    - status
+    type: object
+host: localhost:8080
 info:
-  contact: {}
-paths: {}
+  contact:
+    email: support@olist.com
+    name: API Support
+    url: http://www.swagger.io/support
+  description: API para gerenciamento de entregas da Olist
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Olist Shipping API
+  version: "1.0"
+paths:
+  /carriers:
+    get:
+      consumes:
+      - application/json
+      description: Get all available carriers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/v1.CarrierResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.Response'
+      summary: List all carriers
+      tags:
+      - carriers
+  /packages:
+    get:
+      consumes:
+      - application/json
+      description: Get all packages with pagination support
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/v1.PackageResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.Response'
+      summary: List all packages
+      tags:
+      - packages
+    post:
+      consumes:
+      - application/json
+      description: Create a new package for shipping
+      parameters:
+      - description: Package data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CreatePackageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.PackageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.Response'
+      summary: Create a new package
+      tags:
+      - packages
+  /packages/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a package by ID
+      parameters:
+      - description: Package ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.Response'
+      summary: Delete a package
+      tags:
+      - packages
+    get:
+      consumes:
+      - application/json
+      description: Get package details by package ID
+      parameters:
+      - description: Package ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.PackageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.Response'
+      summary: Get package by ID
+      tags:
+      - packages
+  /packages/{id}/hire:
+    post:
+      consumes:
+      - application/json
+      description: Hire a carrier to deliver the package
+      parameters:
+      - description: Package ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Carrier hire data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.HireCarrierRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.Response'
+      summary: Hire carrier for package
+      tags:
+      - packages
+  /packages/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update the status of a package
+      parameters:
+      - description: Package ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdatePackageStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.Response'
+      summary: Update package status
+      tags:
+      - packages
+  /packages/tracking/{tracking_code}:
+    get:
+      consumes:
+      - application/json
+      description: Get package details by tracking code
+      parameters:
+      - description: Tracking Code
+        in: path
+        name: tracking_code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.PackageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.Response'
+      summary: Get package by tracking code
+      tags:
+      - packages
+  /quotes:
+    get:
+      consumes:
+      - application/json
+      description: Get shipping quotes for a package based on destination state and
+        weight
+      parameters:
+      - description: Destination state code
+        in: query
+        name: estado_destino
+        required: true
+        type: string
+      - description: Package weight in kg
+        in: query
+        name: peso_kg
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/v1.QuoteResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.Response'
+      summary: Get shipping quotes
+      tags:
+      - quotes
+  /states:
+    get:
+      consumes:
+      - application/json
+      description: Get all Brazilian states with their regions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/v1.StateResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.Response'
+      summary: List all states
+      tags:
+      - states
 swagger: "2.0"

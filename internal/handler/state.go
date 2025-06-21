@@ -31,6 +31,15 @@ func NewStateHandler(packageService *service.PackageService, cfg *config.Config,
 	}
 }
 
+// List godoc
+// @Summary      List all states
+// @Description  Get all Brazilian states with their regions
+// @Tags         states
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  v1.Response{data=[]v1.StateResponse}
+// @Failure      500  {object}  v1.Response
+// @Router       /states [get]
 func (h *StateHandler) List(ctx *gin.Context) {
 	logger := middleware.GetLoggerFromContext(ctx)
 	logger.Info("list states started")
