@@ -12,6 +12,7 @@ import (
 	"github/moura95/olist-shipping-api/internal/middleware"
 	"github/moura95/olist-shipping-api/internal/service"
 	"github/moura95/olist-shipping-api/internal/util"
+	customValidator "github/moura95/olist-shipping-api/pkg/validator"
 	"go.uber.org/zap"
 )
 
@@ -23,11 +24,13 @@ type PackageHandler struct {
 }
 
 func NewPackageHandler(packageService *service.PackageService, cfg *config.Config, logger *zap.SugaredLogger) *PackageHandler {
+	validate := validator.New()
+	customValidator.SetupCustomValidators(validate)
 	return &PackageHandler{
 		packageService: packageService,
 		config:         cfg,
 		logger:         logger,
-		validate:       validator.New(),
+		validate:       validate,
 	}
 }
 
@@ -199,7 +202,7 @@ func (h *PackageHandler) Create(ctx *gin.Context) {
 
 	if err := h.validate.Struct(req); err != nil {
 		logger.Errorw("validation failed", "error", err)
-		v1.HandleValidationError(ctx, err.Error())
+		v1.HandleValidationError(ctx, err)
 		return
 	}
 
@@ -252,7 +255,7 @@ func (h *PackageHandler) UpdateStatus(ctx *gin.Context) {
 
 	if err := h.validate.Struct(req); err != nil {
 		logger.Errorw("validation failed", "error", err)
-		v1.HandleValidationError(ctx, err.Error())
+		v1.HandleValidationError(ctx, err)
 		return
 	}
 
@@ -309,7 +312,7 @@ func (h *PackageHandler) GetQuotes(ctx *gin.Context) {
 
 	if err := h.validate.Struct(query); err != nil {
 		logger.Errorw("validation failed", "error", err)
-		v1.HandleValidationError(ctx, err.Error())
+		v1.HandleValidationError(ctx, err)
 		return
 	}
 
@@ -346,7 +349,7 @@ func (h *PackageHandler) HireCarrier(ctx *gin.Context) {
 
 	if err := h.validate.Struct(req); err != nil {
 		logger.Errorw("validation failed", "error", err)
-		v1.HandleValidationError(ctx, err.Error())
+		v1.HandleValidationError(ctx, err)
 		return
 	}
 

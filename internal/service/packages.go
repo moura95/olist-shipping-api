@@ -131,14 +131,23 @@ func (s *PackageService) GetQuotes(ctx context.Context, stateCode string, weight
 }
 
 func (s *PackageService) HireCarrier(ctx context.Context, packageID, carrierID string, price string, deliveryDays int32) error {
+	pkg, err := s.GetByID(ctx, packageID)
+	if err != nil {
+		return fmt.Errorf("package not found")
+	}
+
+	if err := s.ValidateCarrierForRegion(ctx, carrierID, pkg.DestinationState); err != nil {
+		return err
+	}
+
 	pkgUUID, err := uuid.Parse(packageID)
 	if err != nil {
-		return fmt.Errorf("parse package id: %v", err)
+		return fmt.Errorf("invalid package ID")
 	}
 
 	carrierUUID, err := uuid.Parse(carrierID)
 	if err != nil {
-		return fmt.Errorf("parse carrier id: %v", err)
+		return fmt.Errorf("invalid carrier ID")
 	}
 
 	arg := repository.HireCarrierParams{
@@ -157,12 +166,7 @@ func (s *PackageService) HireCarrier(ctx context.Context, packageID, carrierID s
 		},
 	}
 
-	err = s.repository.HireCarrier(ctx, arg)
-	if err != nil {
-		return fmt.Errorf("hire carrier: %v", err)
-	}
-
-	return nil
+	return s.repository.HireCarrier(ctx, arg)
 }
 
 func (s *PackageService) GetCarriers(ctx context.Context) ([]repository.Carrier, error) {
@@ -181,4 +185,29 @@ func (s *PackageService) GetStates(ctx context.Context) ([]repository.ListStates
 	}
 
 	return states, nil
+}
+
+func (s *PackageService) ValidateCarrierForRegion(ctx context.Context, carrierID, stateCode string) error {
+	carrierUUID, err := uuid.Parse(carrierID)
+	if err != nil {
+		return fmt.Errorf("invalid carrier ID")
+	}
+
+	region, err := s.repository.GetRegionByState(ctx, stateCode)
+	if err != nil {
+		return fmt.Errorf("invalid state code")
+	}
+
+	carrierRegions, err := s.repository.GetCarrierRegions(ctx, carrierUUID)
+	if err != nil {
+		return fmt.Errorf("carrier not found")
+	}
+
+	for _, cr := range carrierRegions {
+		if cr.RegionID == region.ID {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("carrier does not serve this region")
 }
