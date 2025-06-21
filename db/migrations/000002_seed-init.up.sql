@@ -5,8 +5,7 @@ INSERT INTO regions (id, name) VALUES
                                    ('550e8400-e29b-41d4-a716-446655440004', 'Nordeste'),
                                    ('550e8400-e29b-41d4-a716-446655440005', 'Norte');
 
--- States
-INSERT INTO states (sigla, name, region_id) VALUES
+INSERT INTO states (code, name, region_id) VALUES
 -- Sul
 ('RS', 'Rio Grande do Sul', '550e8400-e29b-41d4-a716-446655440001'),
 ('SC', 'Santa Catarina', '550e8400-e29b-41d4-a716-446655440001'),
@@ -45,24 +44,22 @@ INSERT INTO carriers (id, name) VALUES
                                     ('660e8400-e29b-41d4-a716-446655440002', 'RotaFácil Transportes'),
                                     ('660e8400-e29b-41d4-a716-446655440003', 'Moventra Express');
 
--- Carrier Regions
-INSERT INTO carrier_regions (carrier_id, region_id, prazo_estimado_dias, preco_por_kg) VALUES
+INSERT INTO carrier_regions (carrier_id, region_id, estimated_delivery_days, price_per_kg) VALUES
 -- Nebulix: Sul e Sudeste
-('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 4, 5.90), -- Sul
-('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440002', 4, 5.90), -- Sudeste
+('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 4, 5.90),
+('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440002', 4, 5.90),
 
 -- RotaFácil: Sul, Sudeste, Centro-Oeste, Nordeste
-('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440001', 7, 4.35),  -- Sul
-('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440002', 7, 4.35),  -- Sudeste
-('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440003', 9, 6.22),  -- Centro-Oeste
-('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440004', 13, 8.00), -- Nordeste
+('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440001', 7, 4.35),
+('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440002', 7, 4.35),
+('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440003', 9, 6.22),
+('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440004', 13, 8.00),
 
 -- Moventra: Centro-Oeste, Nordeste
-('660e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440003', 7, 7.30),  -- Centro-Oeste
-('660e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440004', 10, 9.50); -- Nordeste
+('660e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440003', 7, 7.30),
+('660e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440004', 10, 9.50);
 
--- Sample packages for testing
-INSERT INTO packages (id, tracking_code, produto, peso_kg, estado_destino, status) VALUES
-('770e8400-e29b-41d4-a716-446655440001', 'BR72619195', 'Camisa tamanho G', 0.6, 'PR', 'criado'),
-('770e8400-e29b-41d4-a716-446655440002', 'BR38897894', 'Notebook Dell', 2.5, 'SP', 'enviado'),
-('770e8400-e29b-41d4-a716-446655440003', 'BR14506220', 'Livro de programação', 0.8, 'RJ', 'coletado');
+INSERT INTO packages (id, tracking_code, product, weight_kg, destination_state, status) VALUES
+                                                                                            ('770e8400-e29b-41d4-a716-446655440001', 'BR72619195', 'Camisa tamanho G', 0.6, 'PR', 'created'),
+                                                                                            ('770e8400-e29b-41d4-a716-446655440002', 'BR38897894', 'Notebook Dell', 2.5, 'SP', 'shipped'),
+                                                                                            ('770e8400-e29b-41d4-a716-446655440003', 'BR14506220', 'Livro de programação', 0.8, 'RJ', 'picked_up');
