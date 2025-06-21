@@ -41,7 +41,20 @@ restart:
 swag:
 	swag init -g cmd/main.go
 
+# Test commands
 test:
 	go test -v ./...
 
-.PHONY: migrate-up migrate-down migrate-create down up sqlc start run restart swag test
+test-unit:
+	go test -v ./tests/server/service/... -run ".*Unit.*"
+
+test-integration:
+	go test -v ./tests/server/service/... -run ".*Integration.*"
+
+test-repository:
+	go test -v ./tests/server/repository/...
+
+test-service:
+	go test -v ./tests/server/service/...
+
+.PHONY: migrate-up migrate-down migrate-create down up sqlc start run restart swag test test-unit test-integration test-repository test-service
