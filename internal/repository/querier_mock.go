@@ -16,8 +16,16 @@ type QuerierMocked struct {
 }
 
 func (_m *QuerierMocked) UpdatePackageStatusWithTracking(ctx context.Context, arg UpdatePackageStatusWithTrackingParams) error {
-	//TODO implement me
-	panic("implement me")
+	ret := _m.Called(ctx, arg)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, UpdatePackageStatusWithTrackingParams) error); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // NewQuerierMocked creates a new instance of QuerierMocked. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

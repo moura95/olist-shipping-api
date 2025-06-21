@@ -30,13 +30,10 @@ func TestPackageService_Create(t *testing.T) {
 			weightKg:         2.5,
 			destinationState: "SP",
 			setupMocked: func(repo *repository.QuerierMocked) {
-				repo.On("TrackingCodeExists", mock.Anything, mock.AnythingOfType("string")).Return(false, nil)
-
 				expectedPackage := repository.Package{
 					ID: uuid.New(),
 					TrackingCode: sql.NullString{
-						String: "BR12345678",
-						Valid:  true,
+						Valid: false,
 					},
 					Product:          "Test Product",
 					WeightKg:         2.5,
@@ -50,28 +47,6 @@ func TestPackageService_Create(t *testing.T) {
 						arg.WeightKg == 2.5 &&
 						arg.DestinationState == "SP"
 				})).Return(expectedPackage, nil)
-			},
-		},
-		{
-			name:             "Create package with tracking code collision",
-			product:          "Test Product",
-			weightKg:         1.0,
-			destinationState: "RJ",
-			setupMocked: func(repo *repository.QuerierMocked) {
-
-				expectedPackage := repository.Package{
-					ID: uuid.New(),
-					TrackingCode: sql.NullString{
-						String: "",
-						Valid:  false,
-					},
-					Product:          "Test Product",
-					WeightKg:         1.0,
-					DestinationState: "RJ",
-					Status:           "criado",
-				}
-
-				repo.On("CreatePackage", mock.Anything, mock.AnythingOfType("repository.CreatePackageParams")).Return(expectedPackage, nil)
 			},
 		},
 	}
@@ -96,6 +71,7 @@ func TestPackageService_Create(t *testing.T) {
 				assert.Equal(t, tt.product, result.Product)
 				assert.Equal(t, tt.weightKg, result.WeightKg)
 				assert.Equal(t, tt.destinationState, result.DestinationState)
+				assert.False(t, result.TrackingCode.Valid)
 				assert.Equal(t, "criado", result.Status)
 			}
 		})
@@ -116,6 +92,7 @@ func TestPackageService_GetByID(t *testing.T) {
 				expectedUUID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 				expectedPackage := repository.Package{
 					ID:               expectedUUID,
+					TrackingCode:     sql.NullString{String: "BR12345678", Valid: true},
 					Product:          "Test Product",
 					WeightKg:         2.5,
 					DestinationState: "SP",
@@ -159,6 +136,9 @@ func TestPackageService_GetByID(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
+				if result.TrackingCode.Valid {
+					assert.Equal(t, "BR12345678", result.TrackingCode.String)
+				}
 				assert.Equal(t, "Test Product", result.Product)
 				assert.Equal(t, 2.5, result.WeightKg)
 			}
@@ -174,22 +154,28 @@ func TestPackageService_GetByTrackingCode(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name: "Get package by valid tracking code",
+			name:         "Get package by valid tracking code",
+			trackingCode: "BR12345678",
 			setupMocked: func(repo *repository.QuerierMocked) {
 				expectedPackage := repository.Package{
 					ID:               uuid.New(),
+					TrackingCode:     sql.NullString{String: "BR12345678", Valid: true},
 					Product:          "Test Product",
 					WeightKg:         2.5,
 					DestinationState: "SP",
 					Status:           "criado",
 				}
 
-				repo.On("GetPackageByTrackingCode", mock.Anything, "BR12345678").Return(expectedPackage, nil)
+				repo.On("GetPackageByTrackingCode", mock.Anything, sql.NullString{String: "BR12345678", Valid: true}).Return(expectedPackage, nil)
+
 			},
 		},
 		{
-			name: "Get package by tracking code not found",
+			name:         "Get package by tracking code not found",
+			trackingCode: "BR99999999",
 			setupMocked: func(repo *repository.QuerierMocked) {
+				repo.On("GetPackageByTrackingCode", mock.Anything, sql.NullString{String: "BR99999999", Valid: true}).Return(repository.Package{}, sql.ErrNoRows)
+
 			},
 			expectedError: "get package by tracking code",
 		},
@@ -212,6 +198,9 @@ func TestPackageService_GetByTrackingCode(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
+				if result.TrackingCode.Valid {
+					assert.Equal(t, "BR12345678", result.TrackingCode.String)
+				}
 				assert.Equal(t, "Test Product", result.Product)
 			}
 		})
@@ -231,6 +220,7 @@ func TestPackageService_GetAll(t *testing.T) {
 				expectedPackages := []repository.Package{
 					{
 						ID:               uuid.New(),
+						TrackingCode:     sql.NullString{Valid: false},
 						Product:          "Product 1",
 						WeightKg:         1.0,
 						DestinationState: "SP",
@@ -292,17 +282,34 @@ func TestPackageService_UpdateStatus(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:      "Update package status successfully",
+			name:      "Update package status to coletado",
 			packageID: "550e8400-e29b-41d4-a716-446655440000",
-			status:    "enviado",
+			status:    "coletado",
 			setupMocked: func(repo *repository.QuerierMocked) {
 				expectedUUID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 				expectedParams := repository.UpdatePackageStatusParams{
 					ID:     expectedUUID,
-					Status: "enviado",
+					Status: "coletado",
 				}
 
 				repo.On("UpdatePackageStatus", mock.Anything, expectedParams).Return(nil)
+			},
+		},
+		{
+			name:      "Update package status to enviado with tracking code",
+			packageID: "550e8400-e29b-41d4-a716-446655440000",
+			status:    "enviado",
+			setupMocked: func(repo *repository.QuerierMocked) {
+				expectedUUID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
+
+				repo.On("TrackingCodeExists", mock.Anything, mock.AnythingOfType("sql.NullString")).Return(false, nil)
+
+				repo.On("UpdatePackageStatusWithTracking", mock.Anything, mock.MatchedBy(func(arg repository.UpdatePackageStatusWithTrackingParams) bool {
+					return arg.ID == expectedUUID &&
+						arg.Status == "enviado" &&
+						arg.TrackingCode.Valid &&
+						len(arg.TrackingCode.String) > 0
+				})).Return(nil)
 			},
 		},
 		{
@@ -391,6 +398,13 @@ func TestPackageService_GetQuotes(t *testing.T) {
 			stateCode: "SP",
 			weightKg:  2.5,
 			setupMocked: func(repo *repository.QuerierMocked) {
+				mockState := repository.GetStateByCodeRow{
+					Code:       "SP",
+					Name:       "São Paulo",
+					RegionName: "Sudeste",
+				}
+				repo.On("GetStateByCode", mock.Anything, "SP").Return(mockState, nil)
+
 				expectedParams := repository.GetQuotesForPackageParams{
 					StateCode: "SP",
 					WeightKg:  "2.50",
@@ -412,6 +426,15 @@ func TestPackageService_GetQuotes(t *testing.T) {
 				repo.On("GetQuotesForPackage", mock.Anything, expectedParams).Return(expectedQuotes, nil)
 			},
 			expectedCount: 2,
+		},
+		{
+			name:      "Get quotes for invalid state",
+			stateCode: "XX",
+			weightKg:  2.5,
+			setupMocked: func(repo *repository.QuerierMocked) {
+				repo.On("GetStateByCode", mock.Anything, "XX").Return(repository.GetStateByCodeRow{}, sql.ErrNoRows)
+			},
+			expectedError: "invalid state code",
 		},
 	}
 
@@ -463,9 +486,9 @@ func TestPackageService_HireCarrier(t *testing.T) {
 				expectedCarrierUUID := uuid.MustParse("660e8400-e29b-41d4-a716-446655440001")
 				regionUUID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440002")
 
-				// Mock GetByID (para buscar o pacote)
 				mockPackage := repository.Package{
 					ID:               expectedPkgUUID,
+					TrackingCode:     sql.NullString{Valid: false},
 					Product:          "Test Product",
 					WeightKg:         2.5,
 					DestinationState: "SP",
@@ -473,14 +496,12 @@ func TestPackageService_HireCarrier(t *testing.T) {
 				}
 				repo.On("GetPackageById", mock.Anything, expectedPkgUUID).Return(mockPackage, nil)
 
-				// Mock GetRegionByState (para validar região)
 				mockRegion := repository.GetRegionByStateRow{
 					ID:   regionUUID,
 					Name: "Sudeste",
 				}
 				repo.On("GetRegionByState", mock.Anything, "SP").Return(mockRegion, nil)
 
-				// Mock GetCarrierRegions (para validar se transportadora atende região)
 				mockCarrierRegions := []repository.GetCarrierRegionsRow{
 					{
 						ID:                    uuid.New(),
@@ -493,7 +514,6 @@ func TestPackageService_HireCarrier(t *testing.T) {
 				}
 				repo.On("GetCarrierRegions", mock.Anything, expectedCarrierUUID).Return(mockCarrierRegions, nil)
 
-				// Mock HireCarrier (para salvar)
 				expectedParams := repository.HireCarrierParams{
 					ID: expectedPkgUUID,
 					HiredCarrierID: uuid.NullUUID{
@@ -530,9 +550,9 @@ func TestPackageService_HireCarrier(t *testing.T) {
 			setupMocked: func(repo *repository.QuerierMocked) {
 				expectedPkgUUID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 
-				// Mock GetByID (necessário para chegar na validação do carrier)
 				mockPackage := repository.Package{
 					ID:               expectedPkgUUID,
+					TrackingCode:     sql.NullString{Valid: false},
 					Product:          "Test Product",
 					WeightKg:         2.5,
 					DestinationState: "SP",
@@ -551,27 +571,25 @@ func TestPackageService_HireCarrier(t *testing.T) {
 			setupMocked: func(repo *repository.QuerierMocked) {
 				expectedPkgUUID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 				expectedCarrierUUID := uuid.MustParse("660e8400-e29b-41d4-a716-446655440001")
-				regionUUID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440005") // Norte
+				regionUUID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440005")
 
-				// Mock GetByID
 				mockPackage := repository.Package{
 					ID:               expectedPkgUUID,
+					TrackingCode:     sql.NullString{Valid: false},
 					Product:          "Test Product",
 					WeightKg:         2.5,
-					DestinationState: "AM", // Amazonas (Norte)
+					DestinationState: "AM",
 					Status:           "criado",
 				}
 				repo.On("GetPackageById", mock.Anything, expectedPkgUUID).Return(mockPackage, nil)
 
-				// Mock GetRegionByState
 				mockRegion := repository.GetRegionByStateRow{
 					ID:   regionUUID,
 					Name: "Norte",
 				}
 				repo.On("GetRegionByState", mock.Anything, "AM").Return(mockRegion, nil)
 
-				// Mock GetCarrierRegions (transportadora não atende Norte)
-				mockCarrierRegions := []repository.GetCarrierRegionsRow{} // Vazio = não atende
+				mockCarrierRegions := []repository.GetCarrierRegionsRow{}
 				repo.On("GetCarrierRegions", mock.Anything, expectedCarrierUUID).Return(mockCarrierRegions, nil)
 			},
 			expectedError: "carrier does not serve this region",
