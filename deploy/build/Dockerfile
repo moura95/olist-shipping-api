@@ -2,22 +2,22 @@ FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
-COPY ../.. .
-
+COPY go.mod go.sum ./
 RUN go mod download
 
-RUN go build cmd/main.go
+COPY . .
 
-FROM alpine
+RUN CGO_ENABLED=0 GOOS=linux go build -o main cmd/main.go
 
-COPY --from=builder /app/main /usr/local/bin/main
+FROM alpine:latest
 
-COPY --from=builder /app/.env /usr/local/bin/.env
+RUN apk --no-cache add ca-certificates
+
+WORKDIR /root/
+
+COPY --from=builder /app/main .
+COPY --from=builder /app/.env .
 
 EXPOSE 8080
 
-WORKDIR /usr/local/bin/
-
-
-
-ENTRYPOINT ["main"]
+CMD ["./main"]

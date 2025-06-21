@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+
 	"github.com/spf13/viper"
 )
 
@@ -21,5 +23,10 @@ func LoadConfig(path string) (config Config, err error) {
 		return
 	}
 	err = viper.Unmarshal(&config)
+	// Cloud Run
+	if port := os.Getenv("PORT"); port != "" {
+		config.HTTPServerAddress = "0.0.0.0:" + port
+	}
+
 	return
 }

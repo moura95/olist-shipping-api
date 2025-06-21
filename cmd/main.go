@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"os"
 
 	"github/moura95/olist-shipping-api/config"
 	"github/moura95/olist-shipping-api/db"
@@ -12,25 +12,32 @@ import (
 )
 
 func main() {
-	// Configs
-	loadConfig, _ := config.LoadConfig(".")
-
-	// instance Db
+	loadConfig, err := config.LoadConfig(".")
+	if err != nil {
+		log.Printf("Failed to load config: %v", err)
+		os.Exit(1)
+	}
 
 	conn, err := db.ConnectPostgres(loadConfig.DBSource)
-
 	if err != nil {
-		fmt.Println("Failed to Connected Database")
-		panic(err)
+		log.Printf("Failed to connect to database: %v", err)
+		os.Exit(1)
 	}
+	defer conn.Close()
+
 	log.Print("connection is repository establish")
 
 	store := repository.New(conn.DB())
-	// Zap Logger
-	logger, _ := zap.NewProduction()
+
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Printf("Failed to create logger: %v", err)
+		os.Exit(1)
+	}
 	defer logger.Sync()
 	sugar := logger.Sugar()
 
-	// Run Gin
+	sugar.Infof("Starting server on %s", loadConfig.HTTPServerAddress)
+
 	server.RunGinServer(loadConfig, store, sugar)
 }
