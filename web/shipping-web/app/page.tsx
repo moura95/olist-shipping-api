@@ -9,7 +9,7 @@ import { TrackingSection } from "@/components/tracking-section"
 import { HireCarrierSection } from "@/components/hire-carrier-section"
 import type { Package, Carrier, State } from "@/types"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:8080"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080"
 
 export default function Home() {
   const [packages, setPackages] = useState<Package[]>([])

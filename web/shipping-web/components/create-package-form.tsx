@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast"
 import type { State } from "@/types"
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:8080"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080"
 
 interface CreatePackageFormProps {
   states: State[]

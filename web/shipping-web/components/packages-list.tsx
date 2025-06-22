@@ -14,7 +14,7 @@ import type { Package, Carrier, State } from "@/types"
 import { Truck, PackageIcon, Calendar, DollarSign, Plus } from "lucide-react"
 import { CreatePackageForm } from "@/components/create-package-form"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:8080"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080"
 
 interface PackagesListProps {
   packages: Package[]
