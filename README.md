@@ -7,13 +7,14 @@
 Aplicação desenvolvida para gerenciar envios de pacotes por diferentes transportadoras, permitindo registrar pacotes, consultar status de envio, simular custos com base em peso e região, e contratar a melhor transportadora para realizar a entrega.
 
 ## 🚀 Demo
-- **Backend API**: [http://18.231.246.36:8080](http://18.231.246.36:8080)
+- **Backend API AWS**: [http://18.229.118.66:8080](http://18.231.246.36:8080)
 
 - **Frontend**: [https://moura-olist-front.dh7veh.easypanel.host/](https://moura-olist-front.dh7veh.easypanel.host/)
 
 - ![Frontend](docs/front.png)
 
-- **Documentação Swagger**: [http18.231.246.36:8080/swagger/index.html](http://18.231.106.0:8080/swagger/index.html)
+
+- **Documentação Swagger**: [http://18.229.118.66:8080/swagger/index.html](http://18.229.118.66:8080/swagger/index.html)
   ![Swagger Documentation](docs/swagger-preview.png)
 
 ## 🚀 Recursos
