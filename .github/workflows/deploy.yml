@@ -47,4 +47,11 @@ jobs:
           env_vars: |
             DB_SOURCE=${{ secrets.DB_SOURCE }}
             GIN_MODE=release
-          flags: --allow-unauthenticated --cpu=1 --memory=1Gi --min-instances=0 --max-instances=10
+
+      - name: Make service publicly accessible
+        run: |
+          gcloud run services add-iam-policy-binding ${{ env.SERVICE }} \
+            --region=${{ env.REGION }} \
+            --member="allUsers" \
+            --role="roles/run.invoker" \
+            --project=${{ env.PROJECT_ID }}
