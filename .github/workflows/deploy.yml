@@ -1,4 +1,4 @@
-name: Deploy to AWS App Runner
+name: Deploy to AWS ECS Fargate
 
 on:
   push:
@@ -9,11 +9,13 @@ on:
 env:
   AWS_REGION: sa-east-1
   ECR_REPOSITORY: olist-api
-  APP_RUNNER_SERVICE: olist-api
+  ECS_CLUSTER: olist-cluster
+  ECS_SERVICE: olist-api
+  ECS_TASK_DEFINITION: olist-task
 
 jobs:
   deploy:
-    name: Deploy to App Runner
+    name: Deploy to Fargate
     runs-on: ubuntu-latest
 
     steps:
@@ -26,6 +28,11 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create ECR repository if it doesn't exist
+        run: |
+          aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} --region ${{ env.AWS_REGION }} || \
+          aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }} --region ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -43,41 +50,114 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:latest" >> $GITHUB_OUTPUT
 
-      - name: Deploy to App Runner
+      - name: Create ECS Cluster if needed
         run: |
-          # Check if service exists
-          if aws apprunner describe-service --service-arn $(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='${{ env.APP_RUNNER_SERVICE }}'].ServiceArn" --output text) 2>/dev/null; then
-            echo "Service exists, updating..."
-            SERVICE_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='${{ env.APP_RUNNER_SERVICE }}'].ServiceArn" --output text)
-            aws apprunner start-deployment --service-arn $SERVICE_ARN
-          else
-            echo "Creating new App Runner service..."
-            aws apprunner create-service \
-              --service-name ${{ env.APP_RUNNER_SERVICE }} \
-              --source-configuration '{
-                "ImageRepository": {
-                  "ImageIdentifier": "${{ steps.build-image.outputs.image }}",
-                  "ImageConfiguration": {
-                    "Port": "8080",
-                    "RuntimeEnvironmentVariables": {
-                      "GIN_MODE": "release",
-                      "DB_SOURCE": "${{ secrets.DB_SOURCE }}"
-                    }
+          aws ecs describe-clusters --clusters ${{ env.ECS_CLUSTER }} --region ${{ env.AWS_REGION }} || \
+          aws ecs create-cluster --cluster-name ${{ env.ECS_CLUSTER }} --region ${{ env.AWS_REGION }}
+
+      - name: Create or Update Task Definition
+        run: |
+          cat > task-definition.json << 'EOF'
+          {
+            "family": "${{ env.ECS_TASK_DEFINITION }}",
+            "networkMode": "awsvpc",
+            "requiresCompatibilities": ["FARGATE"],
+            "cpu": "256",
+            "memory": "512",
+            "executionRoleArn": "arn:aws:iam::${{ steps.get-account.outputs.account }}:role/ecsTaskExecutionRole",
+            "containerDefinitions": [
+              {
+                "name": "${{ env.ECR_REPOSITORY }}",
+                "image": "${{ steps.build-image.outputs.image }}",
+                "portMappings": [
+                  {
+                    "containerPort": 8080,
+                    "protocol": "tcp"
+                  }
+                ],
+                "essential": true,
+                "environment": [
+                  {
+                    "name": "GIN_MODE",
+                    "value": "release"
                   },
-                  "ImageRepositoryType": "ECR"
-                },
-                "AutoDeploymentsEnabled": true
-              }' \
-              --instance-configuration '{
-                "Cpu": "0.25 vCPU",
-                "Memory": "0.5 GB"
-              }'
+                  {
+                    "name": "PORT",
+                    "value": "8080"
+                  },
+                  {
+                    "name": "DB_SOURCE",
+                    "value": "${{ secrets.DB_SOURCE }}"
+                  }
+                ],
+                "logConfiguration": {
+                  "logDriver": "awslogs",
+                  "options": {
+                    "awslogs-group": "/ecs/${{ env.ECR_REPOSITORY }}",
+                    "awslogs-region": "${{ env.AWS_REGION }}",
+                    "awslogs-stream-prefix": "ecs",
+                    "awslogs-create-group": "true"
+                  }
+                }
+              }
+            ]
+          }
+          EOF
+          
+          aws ecs register-task-definition --cli-input-json file://task-definition.json --region ${{ env.AWS_REGION }}
+
+      - name: Get Account ID
+        id: get-account
+        run: echo "account=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_OUTPUT
+
+      - name: Create or Update ECS Service
+        run: |
+          # Get default VPC and subnets
+          VPC_ID=$(aws ec2 describe-vpcs --filters "Name=isDefault,Values=true" --query "Vpcs[0].VpcId" --output text --region ${{ env.AWS_REGION }})
+          SUBNET_IDS=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[*].SubnetId" --output text --region ${{ env.AWS_REGION }} | tr '\t' ',')
+          
+          # Create security group if doesn't exist
+          SG_ID=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=olist-ecs-sg" --query "SecurityGroups[0].GroupId" --output text --region ${{ env.AWS_REGION }} 2>/dev/null || echo "None")
+          
+          if [ "$SG_ID" = "None" ]; then
+            SG_ID=$(aws ec2 create-security-group \
+              --group-name olist-ecs-sg \
+              --description "Security group for Olist ECS tasks" \
+              --vpc-id $VPC_ID \
+              --query "GroupId" \
+              --output text \
+              --region ${{ env.AWS_REGION }})
+          
+            aws ec2 authorize-security-group-ingress \
+              --group-id $SG_ID \
+              --protocol tcp \
+              --port 8080 \
+              --cidr 0.0.0.0/0 \
+              --region ${{ env.AWS_REGION }}
+          fi
+          
+          # Check if service exists
+          if aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.ECS_SERVICE }} --region ${{ env.AWS_REGION }} --query "services[0].serviceName" --output text 2>/dev/null | grep -q "${{ env.ECS_SERVICE }}"; then
+            echo "Updating existing service..."
+            aws ecs update-service \
+              --cluster ${{ env.ECS_CLUSTER }} \
+              --service ${{ env.ECS_SERVICE }} \
+              --task-definition ${{ env.ECS_TASK_DEFINITION }} \
+              --region ${{ env.AWS_REGION }}
+          else
+            echo "Creating new service..."
+            aws ecs create-service \
+              --cluster ${{ env.ECS_CLUSTER }} \
+              --service-name ${{ env.ECS_SERVICE }} \
+              --task-definition ${{ env.ECS_TASK_DEFINITION }} \
+              --desired-count 1 \
+              --launch-type FARGATE \
+              --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_IDS],securityGroups=[$SG_ID],assignPublicIp=ENABLED}" \
+              --region ${{ env.AWS_REGION }}
           fi
 
-      - name: Get App Runner URL
+      - name: Get service URL
         run: |
-          SERVICE_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='${{ env.APP_RUNNER_SERVICE }}'].ServiceArn" --output text)
-          SERVICE_URL=$(aws apprunner describe-service --service-arn $SERVICE_ARN --query "Service.ServiceUrl" --output text)
-          echo "🚀 App deployed at: https://$SERVICE_URL"
-          echo "📋 Health check: https://$SERVICE_URL/healthz"
-          echo "📖 Swagger: https://$SERVICE_URL/swagger/index.html"
+          echo "🚀 Service deployed successfully!"
+          echo "📋 Check ECS Console: https://console.aws.amazon.com/ecs/v2/clusters/${{ env.ECS_CLUSTER }}/services/${{ env.ECS_SERVICE }}/tasks"
+          echo "🔍 To get public IP, check the task details in ECS Console"
