@@ -2,21 +2,27 @@ FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
-COPY . .
+# Copiar go.mod e go.sum da raiz (2 níveis acima)
+COPY ../../go.mod ../../go.sum ./
 
+# Download das dependências
 RUN go mod download
 
-RUN go build cmd/main.go
+# Copiar todo o código da raiz
+COPY ../../ .
 
-FROM alpine
+# Build
+RUN go build -o main cmd/main.go
+
+FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates
 
 COPY --from=builder /app/main /usr/local/bin/main
-
 COPY --from=builder /app/.env /usr/local/bin/.env
-
 COPY --from=builder /app/templates /usr/local/bin/templates
 
-EXPOSE 80
+EXPOSE 8080
 
 WORKDIR /usr/local/bin/
 
