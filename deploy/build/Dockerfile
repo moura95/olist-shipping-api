@@ -3,14 +3,22 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
+# Install specific swag version that works
+RUN go install github.com/swaggo/swag/cmd/swag@v1.8.12
+
 COPY . .
 
-# Try building with existing docs first
-RUN go build cmd/main.go || echo "Build failed, will try without docs"
+# Remove old docs and generate new ones
+RUN rm -rf docs/docs.go docs/swagger.json docs/swagger.yaml
+RUN swag init -g cmd/main.go
+
+# Build with specific output name
+RUN go build -o main cmd/main.go
 
 FROM alpine
-COPY --from=builder /app/main /usr/local/bin/main
-COPY --from=builder /app/.env /usr/local/bin/.env
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+COPY --from=builder /app/main ./
+COPY --from=builder /app/.env ./
 EXPOSE 8080
-WORKDIR /usr/local/bin/
-ENTRYPOINT ["main"]
+CMD ["./main"]
