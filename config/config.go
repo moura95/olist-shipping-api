@@ -20,12 +20,22 @@ func LoadConfig(path string) (config Config, err error) {
 
 	err = viper.ReadInConfig()
 	if err != nil {
-		return
+		config.HTTPServerAddress = "0.0.0.0:8080"
+	} else {
+		err = viper.Unmarshal(&config)
+		if err != nil {
+			return
+		}
 	}
-	err = viper.Unmarshal(&config)
-	// Cloud Run
+
+	// Cloud Run sempre define PORT, use ela se disponível
 	if port := os.Getenv("PORT"); port != "" {
 		config.HTTPServerAddress = "0.0.0.0:" + port
+	}
+
+	// Fallback se não tiver PORT nem HTTP_SERVER_ADDRESS
+	if config.HTTPServerAddress == "" {
+		config.HTTPServerAddress = "0.0.0.0:8080"
 	}
 
 	return

@@ -44,12 +44,7 @@ jobs:
           image: "${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:latest"
           project_id: ${{ env.PROJECT_ID }}
           timeout: 300s
-          cpu: 1
-          memory: 1Gi
-          min_instances: 0
-          max_instances: 10
-          port: 8080
-          allow_unauthenticated: true
           env_vars: |
             DB_SOURCE=${{ secrets.DB_SOURCE }}
             GIN_MODE=release
+          flags: --allow-unauthenticated --cpu=1 --memory=1Gi --min-instances=0 --max-instances=10

@@ -15,7 +15,7 @@ RUN swag init -g cmd/main.go
 # Build with specific output name
 RUN go build -o main cmd/main.go
 
-FROM alpine
+FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 COPY --from=builder /app/main ./
