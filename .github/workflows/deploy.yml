@@ -29,6 +29,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Get Account ID
+        id: get-account
+        run: echo "account=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_OUTPUT
+
       - name: Create ECR repository if it doesn't exist
         run: |
           aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} --region ${{ env.AWS_REGION }} || \
@@ -56,19 +60,22 @@ jobs:
           aws ecs create-cluster --cluster-name ${{ env.ECS_CLUSTER }} --region ${{ env.AWS_REGION }}
 
       - name: Create or Update Task Definition
+        env:
+          IMAGE_URI: ${{ steps.build-image.outputs.image }}
+          ACCOUNT_ID: ${{ steps.get-account.outputs.account }}
         run: |
-          cat > task-definition.json << 'EOF'
+          cat > task-definition.json << EOF
           {
             "family": "${{ env.ECS_TASK_DEFINITION }}",
             "networkMode": "awsvpc",
             "requiresCompatibilities": ["FARGATE"],
             "cpu": "256",
             "memory": "512",
-            "executionRoleArn": "arn:aws:iam::${{ steps.get-account.outputs.account }}:role/ecsTaskExecutionRole",
+            "executionRoleArn": "arn:aws:iam::${ACCOUNT_ID}:role/ecsTaskExecutionRole",
             "containerDefinitions": [
               {
                 "name": "${{ env.ECR_REPOSITORY }}",
-                "image": "${{ steps.build-image.outputs.image }}",
+                "image": "${IMAGE_URI}",
                 "portMappings": [
                   {
                     "containerPort": 8080,
@@ -104,11 +111,9 @@ jobs:
           }
           EOF
           
+          # Validate JSON before registering
+          cat task-definition.json
           aws ecs register-task-definition --cli-input-json file://task-definition.json --region ${{ env.AWS_REGION }}
-
-      - name: Get Account ID
-        id: get-account
-        run: echo "account=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_OUTPUT
 
       - name: Create or Update ECS Service
         run: |
