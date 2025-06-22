@@ -54,11 +54,6 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:latest" >> $GITHUB_OUTPUT
 
-      - name: Create ECS Cluster if needed
-        run: |
-          echo "Creating ECS cluster..."
-          aws ecs create-cluster --cluster-name ${{ env.ECS_CLUSTER }} --region ${{ env.AWS_REGION }} || echo "Cluster already exists"
-
       - name: Create or Update Task Definition
         env:
           IMAGE_URI: ${{ steps.build-image.outputs.image }}
@@ -115,10 +110,6 @@ jobs:
 
       - name: Create or Update ECS Service
         run: |
-          # Wait for cluster to be available
-          echo "Waiting for cluster to be active..."
-          aws ecs wait cluster-active --clusters ${{ env.ECS_CLUSTER }} --region ${{ env.AWS_REGION }}
-          
           # Get default VPC and subnets
           VPC_ID=$(aws ec2 describe-vpcs --filters "Name=isDefault,Values=true" --query "Vpcs[0].VpcId" --output text --region ${{ env.AWS_REGION }})
           SUBNET_IDS=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[*].SubnetId" --output text --region ${{ env.AWS_REGION }} | tr '\t' ',')
@@ -144,10 +135,10 @@ jobs:
               --region ${{ env.AWS_REGION }}
           fi
           
-          # Check if service exists
-          SERVICE_EXISTS=$(aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.ECS_SERVICE }} --region ${{ env.AWS_REGION }} --query "services[0].serviceName" --output text 2>/dev/null || echo "None")
+          # Check if service exists and update or create
+          SERVICE_EXISTS=$(aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.ECS_SERVICE }} --region ${{ env.AWS_REGION }} --query "services[?serviceName=='${{ env.ECS_SERVICE }}'].serviceName" --output text 2>/dev/null || echo "")
           
-          if [ "$SERVICE_EXISTS" != "None" ] && [ "$SERVICE_EXISTS" = "${{ env.ECS_SERVICE }}" ]; then
+          if [ -n "$SERVICE_EXISTS" ]; then
             echo "Updating existing service..."
             aws ecs update-service \
               --cluster ${{ env.ECS_CLUSTER }} \
