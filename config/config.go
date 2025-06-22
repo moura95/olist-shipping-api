@@ -18,13 +18,18 @@ func LoadConfig(path string) (config Config, err error) {
 	viper.AddConfigPath(path)
 	viper.SetConfigType("env")
 	viper.SetConfigFile(".env")
-	viper.AutomaticEnv()
-
-	// Try to read config file, but don't fail if it doesn't exist
 	viper.ReadInConfig()
+
+	// Unmarshal to config
 	viper.Unmarshal(&config)
 
-	// Cloud Run PORT variable takes precedence
+	viper.AutomaticEnv()
+
+	// Override with environment variables if they exist
+	if dbSource := os.Getenv("DB_SOURCE"); dbSource != "" {
+		config.DBSource = dbSource
+	}
+
 	if port := os.Getenv("PORT"); port != "" {
 		config.HTTPServerAddress = "0.0.0.0:" + port
 	}
