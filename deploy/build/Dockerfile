@@ -22,8 +22,5 @@ WORKDIR /root/
 # Copy binary
 COPY --from=builder /app/main .
 
-# Create a minimal .env for Cloud Run
-RUN echo 'HTTP_SERVER_ADDRESS=0.0.0.0:8080' > .env
-
 EXPOSE 8080
 CMD ["./main"]
