@@ -56,8 +56,8 @@ jobs:
 
       - name: Create ECS Cluster if needed
         run: |
-          aws ecs describe-clusters --clusters ${{ env.ECS_CLUSTER }} --region ${{ env.AWS_REGION }} || \
-          aws ecs create-cluster --cluster-name ${{ env.ECS_CLUSTER }} --region ${{ env.AWS_REGION }}
+          echo "Creating ECS cluster..."
+          aws ecs create-cluster --cluster-name ${{ env.ECS_CLUSTER }} --region ${{ env.AWS_REGION }} || echo "Cluster already exists"
 
       - name: Create or Update Task Definition
         env:
@@ -111,12 +111,14 @@ jobs:
           }
           EOF
           
-          # Validate JSON before registering
-          cat task-definition.json
           aws ecs register-task-definition --cli-input-json file://task-definition.json --region ${{ env.AWS_REGION }}
 
       - name: Create or Update ECS Service
         run: |
+          # Wait for cluster to be available
+          echo "Waiting for cluster to be active..."
+          aws ecs wait cluster-active --clusters ${{ env.ECS_CLUSTER }} --region ${{ env.AWS_REGION }}
+          
           # Get default VPC and subnets
           VPC_ID=$(aws ec2 describe-vpcs --filters "Name=isDefault,Values=true" --query "Vpcs[0].VpcId" --output text --region ${{ env.AWS_REGION }})
           SUBNET_IDS=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[*].SubnetId" --output text --region ${{ env.AWS_REGION }} | tr '\t' ',')
@@ -125,6 +127,7 @@ jobs:
           SG_ID=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=olist-ecs-sg" --query "SecurityGroups[0].GroupId" --output text --region ${{ env.AWS_REGION }} 2>/dev/null || echo "None")
           
           if [ "$SG_ID" = "None" ]; then
+            echo "Creating security group..."
             SG_ID=$(aws ec2 create-security-group \
               --group-name olist-ecs-sg \
               --description "Security group for Olist ECS tasks" \
@@ -142,7 +145,9 @@ jobs:
           fi
           
           # Check if service exists
-          if aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.ECS_SERVICE }} --region ${{ env.AWS_REGION }} --query "services[0].serviceName" --output text 2>/dev/null | grep -q "${{ env.ECS_SERVICE }}"; then
+          SERVICE_EXISTS=$(aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.ECS_SERVICE }} --region ${{ env.AWS_REGION }} --query "services[0].serviceName" --output text 2>/dev/null || echo "None")
+          
+          if [ "$SERVICE_EXISTS" != "None" ] && [ "$SERVICE_EXISTS" = "${{ env.ECS_SERVICE }}" ]; then
             echo "Updating existing service..."
             aws ecs update-service \
               --cluster ${{ env.ECS_CLUSTER }} \
