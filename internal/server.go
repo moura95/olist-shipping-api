@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -57,8 +58,14 @@ func NewServer(cfg config.Config, store repository.Querier, log *zap.SugaredLogg
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	router.Use(middleware.RateLimitMiddleware())
-	router.Use(middleware.CORSMiddleware())
 	router.Use(middleware.RequestLogMiddleware(log))
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowCredentials = true
+	corsConfig.AddAllowHeaders("redirect")
+	corsConfig.AddAllowHeaders("Authorization")
+	corsConfig.AddAllowHeaders("Content-Type")
+	router.Use(cors.New(corsConfig))
 
 	createRoutesV1(&store, server.config, router, log)
 
