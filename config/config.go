@@ -12,31 +12,22 @@ type Config struct {
 }
 
 func LoadConfig(path string) (config Config, err error) {
+	// Set defaults
+	config.HTTPServerAddress = "0.0.0.0:8080"
+
 	viper.AddConfigPath(path)
 	viper.SetConfigType("env")
 	viper.SetConfigFile(".env")
-
 	viper.AutomaticEnv()
 
-	err = viper.ReadInConfig()
-	if err != nil {
-		config.HTTPServerAddress = "0.0.0.0:8080"
-	} else {
-		err = viper.Unmarshal(&config)
-		if err != nil {
-			return
-		}
-	}
+	// Try to read config file, but don't fail if it doesn't exist
+	viper.ReadInConfig()
+	viper.Unmarshal(&config)
 
-	// Cloud Run sempre define PORT, use ela se disponível
+	// Cloud Run PORT variable takes precedence
 	if port := os.Getenv("PORT"); port != "" {
 		config.HTTPServerAddress = "0.0.0.0:" + port
 	}
 
-	// Fallback se não tiver PORT nem HTTP_SERVER_ADDRESS
-	if config.HTTPServerAddress == "" {
-		config.HTTPServerAddress = "0.0.0.0:8080"
-	}
-
-	return
+	return config, nil
 }

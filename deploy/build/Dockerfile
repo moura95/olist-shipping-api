@@ -13,12 +13,17 @@ RUN rm -rf docs/docs.go docs/swagger.json docs/swagger.yaml
 RUN swag init -g cmd/main.go
 
 # Build with specific output name
-RUN go build -o main cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o main cmd/main.go
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
-COPY --from=builder /app/main ./
-COPY --from=builder /app/.env ./
+
+# Copy binary
+COPY --from=builder /app/main .
+
+# Create a minimal .env for Cloud Run
+RUN echo 'HTTP_SERVER_ADDRESS=0.0.0.0:8080' > .env
+
 EXPOSE 8080
 CMD ["./main"]
