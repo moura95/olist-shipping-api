@@ -1,57 +1,83 @@
-name: Deploy to Cloud Run
+name: Deploy to AWS App Runner
 
 on:
   push:
     branches:
       - main
-      - feature/devops
+      - feature/aws
 
 env:
-  PROJECT_ID: moura-366701
-  GAR_LOCATION: southamerica-east1-docker.pkg.dev
-  REPOSITORY: olist-repo
-  SERVICE: olist-api
-  REGION: southamerica-east1
+  AWS_REGION: sa-east-1
+  ECR_REPOSITORY: olist-api
+  APP_RUNNER_SERVICE: olist-api
 
 jobs:
-  cloudrunProd:
-    name: Setup, Build, Publish, and Deploy
+  deploy:
+    name: Deploy to App Runner
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout código
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          credentials_json: ${{ secrets.SERVICE_ACCOUNT_KEYS }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Configure Docker for Artifact Registry
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          gcloud auth configure-docker ${{ env.GAR_LOCATION }} --quiet
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG . -f deploy/build/Dockerfile
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:latest" >> $GITHUB_OUTPUT
 
-      - name: Build and Push Container
-        run: |-
-          docker build -t "${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:latest" . -f deploy/build/Dockerfile
-          docker push "${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:latest"
-
-      - name: Deploy to Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: ${{ env.SERVICE }}
-          region: ${{ env.REGION }}
-          image: "${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:latest"
-          project_id: ${{ env.PROJECT_ID }}
-          timeout: 300s
-          env_vars: |
-            DB_SOURCE=${{ secrets.DB_SOURCE }}
-            GIN_MODE=release
-
-      - name: Make service publicly accessible
+      - name: Deploy to App Runner
         run: |
-          gcloud run services add-iam-policy-binding ${{ env.SERVICE }} \
-            --region=${{ env.REGION }} \
-            --member="allUsers" \
-            --role="roles/run.invoker" \
-            --project=${{ env.PROJECT_ID }}
+          # Check if service exists
+          if aws apprunner describe-service --service-arn $(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='${{ env.APP_RUNNER_SERVICE }}'].ServiceArn" --output text) 2>/dev/null; then
+            echo "Service exists, updating..."
+            SERVICE_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='${{ env.APP_RUNNER_SERVICE }}'].ServiceArn" --output text)
+            aws apprunner start-deployment --service-arn $SERVICE_ARN
+          else
+            echo "Creating new App Runner service..."
+            aws apprunner create-service \
+              --service-name ${{ env.APP_RUNNER_SERVICE }} \
+              --source-configuration '{
+                "ImageRepository": {
+                  "ImageIdentifier": "${{ steps.build-image.outputs.image }}",
+                  "ImageConfiguration": {
+                    "Port": "8080",
+                    "RuntimeEnvironmentVariables": {
+                      "GIN_MODE": "release",
+                      "DB_SOURCE": "${{ secrets.DB_SOURCE }}"
+                    }
+                  },
+                  "ImageRepositoryType": "ECR"
+                },
+                "AutoDeploymentsEnabled": true
+              }' \
+              --instance-configuration '{
+                "Cpu": "0.25 vCPU",
+                "Memory": "0.5 GB"
+              }'
+          fi
+
+      - name: Get App Runner URL
+        run: |
+          SERVICE_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='${{ env.APP_RUNNER_SERVICE }}'].ServiceArn" --output text)
+          SERVICE_URL=$(aws apprunner describe-service --service-arn $SERVICE_ARN --query "Service.ServiceUrl" --output text)
+          echo "🚀 App deployed at: https://$SERVICE_URL"
+          echo "📋 Health check: https://$SERVICE_URL/healthz"
+          echo "📖 Swagger: https://$SERVICE_URL/swagger/index.html"
