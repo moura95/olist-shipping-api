@@ -7,68 +7,43 @@
 Aplicação desenvolvida para gerenciar envios de pacotes por diferentes transportadoras, permitindo registrar pacotes, consultar status de envio, simular custos com base em peso e região, e contratar a melhor transportadora para realizar a entrega.
 
 ## 🚀 Demo
+- **Backend API**: [http://18.231.246.36:8080](http://18.231.246.36:8080)
 
-- **API:** [https://olist-shipping-api.run.app](https://olist-shipping-api.run.app)
-- **Frontend:** [https://olist-shipping-front.vercel.app](https://olist-shipping-front.vercel.app)
-- **Swagger:** [https://olist-shipping-api.run.app/swagger/index.html](https://olist-shipping-api.run.app/swagger/index.html)
+- **Frontend**: [https://moura-olist-front.dh7veh.easypanel.host/](https://moura-olist-front.dh7veh.easypanel.host/)
 
-![Swagger Documentation](docs/swagger-preview.png)
+- ![Frontend](docs/front.png)
 
-## 📋 Índice
+- **Documentação Swagger**: [http18.231.246.36:8080/swagger/index.html](http://18.231.106.0:8080/swagger/index.html)
+  ![Swagger Documentation](docs/swagger-preview.png)
 
-- [Requisitos](#requisitos)
-- [Tecnologias Utilizadas](#tecnologias-utilizadas)
-- [Instalação](#instalacao)
-- [Como Rodar](#como-rodar)
-- [Testes](#testes)
-- [Endpoints](#endpoints)
-- [Regras de Negócio](#regras-de-negocio)
-- [Arquitetura](#arquitetura)
-- [CI/CD](#cicd)
-- [Autor](#autor)
+## 🚀 Recursos
 
+### Backend (Go + Gin)
+- ✅ API RESTful completa
+- ✅ Documentação Swagger automática
+- ✅ Validação de dados customizada
+- ✅ Migrations com golang-migrate
+- ✅ Testes unitários e de integração
+- ✅ Docker e Docker Compose
+- ✅ CORS configurado para qualquer origem
 
-## 🛠️ Tecnologias Utilizadas
+## 🛠️ Tecnologias
 
-![Go](https://img.shields.io/badge/Go-00ADD8?style=flat&logo=go&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat&logo=postgresql&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
-![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?style=flat&logo=github-actions&logoColor=white)
-![Google Cloud](https://img.shields.io/badge/Google%20Cloud-4285F4?style=flat&logo=google-cloud&logoColor=white)
+**Backend:**
+- Go 1.21+
+- Gin Web Framework
+- PostgreSQL
+- SQLC para geração de código
+- Swagger/OpenAPI
+- Docker & Docker Compose
 
-### Backend
-- **Golang 1.22** - Linguagem principal
-- **Gin** - Framework web
-- **PostgreSQL** - Banco de dados
-- **SQLC** - Geração de código type-safe para SQL
-- **Sqlx** - Driver PostgreSQL com melhor performance
-- **Viper** - Gerenciamento de configurações
-- **Zap** - Logging estruturado
-- **Validator** - Validação de dados
-- **UUID** - Identificadores únicos
+## 📋 Pré-requisitos
 
-### DevOps & Infraestrutura
-- **Docker & Docker Compose** - Containerização
-- **GitHub Actions** - CI/CD
-- **Google Cloud Run** - Deploy e hospedagem
-- **TestContainers** - Testes de integração
-- **Golang-Migrate** - Migrations de banco
-- **Swagger** - Documentação da API
+- Go 1.21 ou superior
+- Node.js 18+ e npm/yarn
+- Docker e Docker Compose
+- PostgreSQL (opcional, pode usar Docker)
 
-### Testes
-- **Testify** - Framework de testes
-- **Mocks (Mockery)** - Testes unitários
-- **TestContainers** - Testes de integração
-
-## 📋 Requisitos
-
-Para rodar o projeto localmente, você precisa ter instalado:
-
-- **Go 1.22+**
-- **Docker & Docker Compose**
-- **Make** (opcional, mas recomendado)
-- **Golang-Migrate** (para migrations)
-- **SQLC** (para geração de código)
 
 ### Instalacao das Ferramentas
 
@@ -93,28 +68,29 @@ brew install sqlc
 go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 ```
 
-## 🚀 Instalacao
 
-### 1. Clone o projeto
+## 🚀️ Como Rodar
+
+### 📊 Backend
+
+#### 1. Clone o projeto
 ```bash
 git clone https://github.com/moura95/olist-shipping-api
 cd olist-shipping-api
 ```
 
-### 2. Instale as dependências
+#### 2. Instale as dependências
 ```bash
 go mod tidy
 ```
 
-### 3. Configure o ambiente
+#### 3. Configure o ambiente
 ```bash
 cp .envexample .env
 # Edite o arquivo .env com suas configurações
 ```
 
-## 💻 Como Rodar
-
-### Opção 1: Com Docker (Recomendado)
+#### 4. Com Docker (Recomendado)
 ```bash
 # Inicia banco + migrations + aplicação
 make start
@@ -125,22 +101,34 @@ make migrate-up
 go run cmd/main.go
 ```
 
-### Opção 2: Desenvolvimento Local
+A API estará disponível em: `http://localhost:8080`
+
+### 🎨 Opcional- Frontend
+
+#### 1. Navegue para o diretório do frontend
 ```bash
-# 1. Suba apenas o banco
-docker-compose up -d psql
-
-# 2. Execute as migrations
-make migrate-up
-
-# 3. Rode a aplicação
-make run
-# ou
-go run cmd/main.go
+cd web/shipping-web
 ```
 
-### 🧪 Testes
+#### 2. Instale as dependências
+```bash
+npm install
+# ou
+yarn install
+```
 
+#### 4. Execute o projeto
+```bash
+npm run dev
+# ou
+yarn dev
+```
+
+O frontend estará disponível em: `http://localhost:3000`
+
+## 🧪 Testes
+
+### Backend
 ```bash
 # Rodar todos os testes
 make test
@@ -156,9 +144,9 @@ make test-service
 make test-repository
 ```
 
-## 📚 Endpoints
+## 📚 Endpoints da API
 
-### Pacotes
+### 📦 Pacotes
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
 | `POST` | `/api/v1/packages` | Criar novo pacote |
@@ -169,20 +157,21 @@ make test-repository
 | `POST` | `/api/v1/packages/{id}/hire` | Contratar transportadora |
 | `DELETE` | `/api/v1/packages/{id}` | Deletar pacote |
 
-### Cotações
+### 💰 Cotações
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
 | `GET` | `/api/v1/quotes?estado_destino=SP&peso_kg=2.0` | Obter cotações de frete |
 
-### Informações
+### ℹ️ Informações
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
 | `GET` | `/api/v1/carriers` | Listar transportadoras |
 | `GET` | `/api/v1/states` | Listar estados brasileiros |
+| `GET` | `/healthz` | Health check |
 
-### Exemplos de Uso
+## 💡 Exemplos de Uso
 
-#### Criar um Pacote
+### Criar um Pacote
 ```bash
 curl -X POST http://localhost:8080/api/v1/packages \
   -H "Content-Type: application/json" \
@@ -193,12 +182,12 @@ curl -X POST http://localhost:8080/api/v1/packages \
   }'
 ```
 
-#### Cotação de Frete
+### Cotação de Frete
 ```bash
 curl "http://localhost:8080/api/v1/quotes?estado_destino=SP&peso_kg=2.0"
 ```
 
-#### Contratar Transportadora
+### Contratar Transportadora
 ```bash
 curl -X POST http://localhost:8080/api/v1/packages/{id}/hire \
   -H "Content-Type: application/json" \
@@ -209,9 +198,9 @@ curl -X POST http://localhost:8080/api/v1/packages/{id}/hire \
   }'
 ```
 
-## 🏗️ Regras de Negocio
+## 🏗️ Regras de Negócio
 
-### Transportadoras Disponíveis
+### 🚚 Transportadoras Disponíveis
 
 #### Nebulix Logística
 - **Regiões:** Sul e Sudeste
@@ -227,15 +216,16 @@ curl -X POST http://localhost:8080/api/v1/packages/{id}/hire \
 - **Centro-Oeste:** 7 dias - R$ 7,30/kg
 - **Nordeste:** 10 dias - R$ 9,50/kg
 
-### Status dos Pacotes
-- `criado` → `esperando_coleta` → `coletado` → `enviado` → `entregue`
-- `extraviado` (status especial)
-
-### Cálculo de Preços
+### 📊 Status dos Pacotes
 ```
-Preço Final = Peso (kg) × Preço por KG da Transportadora
+criado → esperando_coleta → coletado → enviado → entregue
+                                    ↘ extraviado (status especial)
 ```
 
+### 💵 Cálculo de Preços
+```
+Preço Final = Peso (kg) × Preço por kg da transportadora
+```
 ## 🏛️ Arquitetura
 
 O projeto segue uma arquitetura com separação clara de responsabilidades:
@@ -268,6 +258,8 @@ db/                   # Database
 tests/               # Testes organizados
 ├── repository/      # Testes de repository
 └── service/        # Testes unitários e integração
+web/               # Frontend
+├── shipping-web/      
 ```
 
 ## 🔄 CI/CD
@@ -278,10 +270,10 @@ O projeto possui pipeline completa com GitHub Actions:
 1. **Test** - Execução de testes
 2. **Build** - Compilação da aplicação
 3. **Docker Build** - Criação da imagem
-4. **Deploy** - Deploy automático no Google Cloud Run
+4. **Deploy** - Deploy automático no Aws Fargate
 
 ### Deploy
-- **Ambiente:** Google Cloud Run
+- **Ambiente:** Aws Fargate
 - **Trigger:** Push na branch `main`
 - **Database:** PostgreSQL dedicado
 - **Monitoring:** Health checks automáticos
@@ -292,14 +284,6 @@ Importe a collection para testar a API:
 ```
 docs/olist_shipping_collection.json
 ```
-
-## 📊 Métricas Disponíveis
-
-- **Total de Pacotes por Status**
-- **Pacotes por Transportadora**
-- **Tempo Médio de Entrega**
-- **Cotações por Região**
-- **Volume de Entregas por Estado**
 
 ## 🔧 Comandos Úteis
 
@@ -328,6 +312,6 @@ make swag            # Gera Swagger docs
 **Guilherme Moura** - *Engenheiro de Software*
 - GitHub: [@moura95](https://github.com/moura95)
 - LinkedIn: [Guilherme Moura](https://linkedin.com/in/guilherme-moura95)
-- Email: dev@guilhermemoura.dev
+- Email: junior.moura19@hotmail.com
 
 ---

@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast"
 import type { Package, Carrier } from "@/types"
 import { Search, PackageIcon, Truck, Calendar, DollarSign, MapPin } from "lucide-react"
 
-const API_BASE_URL = "http://18.231.106.0:8080"
+const API_BASE_URL = "http://18.231.246.36:8080"
 
 interface TrackingSectionProps {
   carriers: Carrier[]

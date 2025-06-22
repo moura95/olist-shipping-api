@@ -14,7 +14,7 @@ import type { Package, Carrier, State } from "@/types"
 import { Truck, PackageIcon, Calendar, DollarSign, Plus } from "lucide-react"
 import { CreatePackageForm } from "@/components/create-package-form"
 
-const API_BASE_URL = "http://18.231.106.0:8080"
+const API_BASE_URL = "http://18.231.246.36:8080"
 
 interface PackagesListProps {
   packages: Package[]
